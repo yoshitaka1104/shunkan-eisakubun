@@ -12,13 +12,26 @@ import {
   totals,
   weakQuestionIds,
 } from './progress.js';
-import { createRecognizer, isRecognitionSupported, speak, stopSpeaking } from './speech.js';
+import {
+  canAutoSpeak,
+  createRecognizer,
+  isIOS,
+  isRecognitionSupported,
+  preflightMicrophone,
+  speak,
+  stopSpeaking,
+} from './speech.js';
 import { loadProgress, saveProgress } from './storage.js';
 
+const APP_VERSION = 'v1.1';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
 const TIME_LIMIT_OPTIONS = [0, 5, 10, 15, 20];
 const AFTER_CORRECT_DELAY_MS = 500;
+/** 読み上げない場合に、正解の模範解答を見せておく時間。 */
+const SILENT_CORRECT_DELAY_MS = 1500;
+/** マイクの失敗がこの回数続いたら、最初から文字入力を出す。 */
+const BLOCKING_FAILURE_LIMIT = 2;
 const TOAST_MS = 2500;
 
 const VERDICT_LABELS = { correct: '正解', close: '惜しい', wrong: '不正解' };
@@ -26,10 +39,11 @@ const VERDICT_LABELS = { correct: '正解', close: '惜しい', wrong: '不正�
 const RECOGNITION_MESSAGES = {
   'no-speech': '聞き取れませんでした。',
   network: '音声認識サービスに接続できませんでした。',
-  denied: 'マイクが許可されていません。ブラウザの設定で許可すると、声で答えられます。',
-  'no-mic': 'マイクが見つかりません。文字で回答してください。',
+  denied: 'マイクまたは音声認識を使えませんでした。ブラウザと端末の設定を確認してください。',
+  'no-mic': 'マイクを使えませんでした。ほかのアプリがマイクを使っていないか確認してください。',
   unsupported: 'この環境は英語の音声認識に対応していません。文字で回答してください。',
 };
+const IOS_RETRY_HINT = '続けて失敗するときは、ページを再読み込みしてください。';
 const UNSUPPORTED_MESSAGE = 'このブラウザは音声入力に対応していません。文字で回答してください。';
 const BLOCKING_ERRORS = new Set(['denied', 'no-mic', 'unsupported']);
 
@@ -118,6 +132,7 @@ function renderHome() {
         </button>
       </div>
       ${isRecognitionSupported() ? '' : `<p class="notice">${UNSUPPORTED_MESSAGE}</p>`}
+      <p class="version">${APP_VERSION}</p>
     </main>`;
 }
 
@@ -143,18 +158,25 @@ function requestStart(picked) {
   startSession(picked);
 }
 
-function startSession(picked) {
+async function startSession(picked) {
   const voiceAvailable = isRecognitionSupported();
   session = {
     queue: picked,
     index: 0,
     firstResults: new Map(),
-    voiceBlocked: !voiceAvailable,
+    voiceAvailable,
+    preferTyping: !voiceAvailable,
+    blockingFailures: 0,
     notice: voiceAvailable ? '' : UNSUPPORTED_MESSAGE,
+    failureDetail: '',
     phase: 'asking',
     verdict: null,
     timedOut: false,
   };
+  if (voiceAvailable && isIOS() && !(await preflightMicrophone())) {
+    session.preferTyping = true;
+    session.notice = RECOGNITION_MESSAGES.denied;
+  }
   beginAttempt();
 }
 
@@ -209,7 +231,8 @@ function beginAttempt() {
   cancelPendingWork();
   session.verdict = null;
   session.timedOut = false;
-  session.phase = session.voiceBlocked ? 'typing' : 'asking';
+  session.failureDetail = '';
+  session.phase = session.preferTyping ? 'typing' : 'asking';
   renderQuiz();
   startTimer();
 }
@@ -221,7 +244,7 @@ function nextQuestion() {
     return;
   }
   session.index += 1;
-  if (!session.voiceBlocked) session.notice = '';
+  if (!session.preferTyping) session.notice = '';
   beginAttempt();
 }
 
@@ -238,24 +261,28 @@ function startListening() {
     },
     onResult(candidates) {
       recognizer = null;
+      session.blockingFailures = 0;
+      session.preferTyping = false;
       submitAnswer(candidates);
     },
-    onError(kind) {
+    onError(kind, code, trace) {
       recognizer = null;
-      handleRecognitionError(kind);
+      handleRecognitionError(kind, code, trace);
     },
   });
   recognizer.start();
 }
 
-function handleRecognitionError(kind) {
+/**
+ * 認識の失敗を画面に出す。
+ * 一時的なエラーで音声入力を閉ざさないよう、続けて失敗したときだけ文字入力を標準にする。
+ */
+function handleRecognitionError(kind, code, trace) {
   session.notice = RECOGNITION_MESSAGES[kind];
-  if (BLOCKING_ERRORS.has(kind)) {
-    session.voiceBlocked = true;
-    session.phase = 'typing';
-  } else {
-    session.phase = 'failed';
-  }
+  session.failureDetail = [code, ...trace].join(' ');
+  session.blockingFailures = BLOCKING_ERRORS.has(kind) ? session.blockingFailures + 1 : 0;
+  if (session.blockingFailures >= BLOCKING_FAILURE_LIMIT) session.preferTyping = true;
+  session.phase = session.preferTyping ? 'typing' : 'failed';
   renderQuiz();
 }
 
@@ -272,14 +299,18 @@ function submitAnswer(candidates) {
   if (verdict.result === 'correct') {
     session.phase = 'correct';
     renderQuiz();
-    speak(verdict.modelText, () => {
-      advanceTimer = setTimeout(nextQuestion, AFTER_CORRECT_DELAY_MS);
-    });
+    if (canAutoSpeak()) {
+      speak(verdict.modelText, () => {
+        advanceTimer = setTimeout(nextQuestion, AFTER_CORRECT_DELAY_MS);
+      });
+    } else {
+      advanceTimer = setTimeout(nextQuestion, SILENT_CORRECT_DELAY_MS);
+    }
     return;
   }
   session.phase = 'review';
   renderQuiz();
-  speak(verdict.modelText);
+  if (canAutoSpeak()) speak(verdict.modelText);
 }
 
 /** 自分の回答を正解例に加え、この問題を正解として記録し直す。 */
@@ -307,9 +338,19 @@ function listeningPanel() {
     <p class="interim" data-interim lang="en"></p>`;
 }
 
+function failureDetailHtml() {
+  if (!session.failureDetail) return '';
+  return `
+    <details class="failure-detail">
+      <summary>詳細</summary>
+      <p lang="en">${escapeHtml(session.failureDetail)}</p>
+    </details>`;
+}
+
 function failedPanel() {
   return `
-    <p class="notice">${escapeHtml(session.notice)}</p>
+    <p class="notice">${escapeHtml(session.notice)}${isIOS() ? ` ${IOS_RETRY_HINT}` : ''}</p>
+    ${failureDetailHtml()}
     <div class="actions">
       <button type="button" class="primary" data-action="mic">もう一度話す</button>
       <button type="button" class="secondary" data-action="show-typing">文字で入力</button>
@@ -319,13 +360,14 @@ function failedPanel() {
 function typingPanel() {
   return `
     ${session.notice ? `<p class="notice">${escapeHtml(session.notice)}</p>` : ''}
+    ${failureDetailHtml()}
     <form class="typing" data-form="answer">
       <label for="answer-input">英語で入力</label>
       <input id="answer-input" name="answer" type="text" lang="en" autocomplete="off" autocapitalize="off"
         autocorrect="off" spellcheck="false" enterkeyhint="done">
       <button type="submit" class="primary">回答する</button>
     </form>
-    ${session.voiceBlocked ? '' : '<button type="button" class="text-button" data-action="show-voice">声で答える</button>'}`;
+    ${session.voiceAvailable ? '<button type="button" class="text-button" data-action="show-voice">声で答える</button>' : ''}`;
 }
 
 function nextLabel() {

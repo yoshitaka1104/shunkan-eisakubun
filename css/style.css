@@ -151,6 +151,28 @@ input:focus-visible {
   white-space: nowrap;
 }
 
+.failure-detail {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.failure-detail summary {
+  min-height: 32px;
+  cursor: pointer;
+}
+
+.failure-detail p {
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.version {
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
 /* ホーム */
 .home-head h1 {
   font-size: 1.9rem;
