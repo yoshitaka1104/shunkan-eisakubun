@@ -13,23 +13,23 @@ import {
   weakQuestionIds,
 } from './progress.js';
 import {
-  canAutoSpeak,
   createRecognizer,
+  diagnostics,
   isIOS,
   isRecognitionSupported,
   preflightMicrophone,
+  primeForListening,
   speak,
   stopSpeaking,
-} from './speech.js';
+  unlockSpeech,
+} from './speech.js?v=1.2';
 import { loadProgress, saveProgress } from './storage.js';
 
-const APP_VERSION = 'v1.1';
+const APP_VERSION = 'v1.2';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
 const TIME_LIMIT_OPTIONS = [0, 5, 10, 15, 20];
 const AFTER_CORRECT_DELAY_MS = 500;
-/** 読み上げない場合に、正解の模範解答を見せておく時間。 */
-const SILENT_CORRECT_DELAY_MS = 1500;
 /** マイクの失敗がこの回数続いたら、最初から文字入力を出す。 */
 const BLOCKING_FAILURE_LIMIT = 2;
 const TOAST_MS = 2500;
@@ -43,7 +43,8 @@ const RECOGNITION_MESSAGES = {
   'no-mic': 'マイクを使えませんでした。ほかのアプリがマイクを使っていないか確認してください。',
   unsupported: 'この環境は英語の音声認識に対応していません。文字で回答してください。',
 };
-const IOS_RETRY_HINT = '続けて失敗するときは、ページを再読み込みしてください。';
+const IOS_RETRY_HINT = '続けて失敗するときは、「文字で入力」からキーボードのマイクを使ってください。';
+const IOS_DICTATION_HINT = 'キーボードのマイクを押すと、声で入力できます。英語のキーボードに切り替えてから話してください。';
 const UNSUPPORTED_MESSAGE = 'このブラウザは音声入力に対応していません。文字で回答してください。';
 const BLOCKING_ERRORS = new Set(['denied', 'no-mic', 'unsupported']);
 
@@ -173,6 +174,7 @@ async function startSession(picked) {
     verdict: null,
     timedOut: false,
   };
+  unlockSpeech();
   if (voiceAvailable && isIOS() && !(await preflightMicrophone())) {
     session.preferTyping = true;
     session.notice = RECOGNITION_MESSAGES.denied;
@@ -248,13 +250,24 @@ function nextQuestion() {
   beginAttempt();
 }
 
+function showMicReady() {
+  root.querySelector('[data-mic]')?.classList.add('is-listening');
+  const hint = root.querySelector('[data-hint]');
+  if (hint) hint.textContent = '聞いています。話し終えたらタップ';
+}
+
 function startListening() {
   stopTimer();
   stopSpeaking();
   session.phase = 'listening';
   session.notice = '';
   renderQuiz();
+  primeForListening(startRecognition);
+}
+
+function startRecognition() {
   recognizer = createRecognizer({
+    onReady: showMicReady,
     onInterim(text) {
       const interim = root.querySelector('[data-interim]');
       if (interim) interim.textContent = text;
@@ -265,9 +278,9 @@ function startListening() {
       session.preferTyping = false;
       submitAnswer(candidates);
     },
-    onError(kind, code, trace) {
+    onError(kind, code) {
       recognizer = null;
-      handleRecognitionError(kind, code, trace);
+      handleRecognitionError(kind, code);
     },
   });
   recognizer.start();
@@ -277,9 +290,9 @@ function startListening() {
  * 認識の失敗を画面に出す。
  * 一時的なエラーで音声入力を閉ざさないよう、続けて失敗したときだけ文字入力を標準にする。
  */
-function handleRecognitionError(kind, code, trace) {
+function handleRecognitionError(kind, code) {
   session.notice = RECOGNITION_MESSAGES[kind];
-  session.failureDetail = [code, ...trace].join(' ');
+  session.failureDetail = `${code} ${diagnostics()}`;
   session.blockingFailures = BLOCKING_ERRORS.has(kind) ? session.blockingFailures + 1 : 0;
   if (session.blockingFailures >= BLOCKING_FAILURE_LIMIT) session.preferTyping = true;
   session.phase = session.preferTyping ? 'typing' : 'failed';
@@ -299,18 +312,14 @@ function submitAnswer(candidates) {
   if (verdict.result === 'correct') {
     session.phase = 'correct';
     renderQuiz();
-    if (canAutoSpeak()) {
-      speak(verdict.modelText, () => {
-        advanceTimer = setTimeout(nextQuestion, AFTER_CORRECT_DELAY_MS);
-      });
-    } else {
-      advanceTimer = setTimeout(nextQuestion, SILENT_CORRECT_DELAY_MS);
-    }
+    speak(verdict.modelText, () => {
+      advanceTimer = setTimeout(nextQuestion, AFTER_CORRECT_DELAY_MS);
+    });
     return;
   }
   session.phase = 'review';
   renderQuiz();
-  if (canAutoSpeak()) speak(verdict.modelText);
+  speak(verdict.modelText);
 }
 
 /** 自分の回答を正解例に加え、この問題を正解として記録し直す。 */
@@ -333,8 +342,8 @@ function askingPanel() {
 
 function listeningPanel() {
   return `
-    <button type="button" class="mic is-listening" data-action="stop-mic" aria-label="話し終える">${MIC_ICON}</button>
-    <p class="hint">聞いています。話し終えたらタップ</p>
+    <button type="button" class="mic" data-mic data-action="stop-mic" aria-label="話し終える">${MIC_ICON}</button>
+    <p class="hint" data-hint>マイクを準備しています</p>
     <p class="interim" data-interim lang="en"></p>`;
 }
 
@@ -344,6 +353,7 @@ function failureDetailHtml() {
     <details class="failure-detail">
       <summary>詳細</summary>
       <p lang="en">${escapeHtml(session.failureDetail)}</p>
+      <button type="button" class="text-button" data-action="copy-detail">コピー</button>
     </details>`;
 }
 
@@ -367,6 +377,7 @@ function typingPanel() {
         autocorrect="off" spellcheck="false" enterkeyhint="done">
       <button type="submit" class="primary">回答する</button>
     </form>
+    ${isIOS() ? `<p class="hint">${IOS_DICTATION_HINT}</p>` : ''}
     ${session.voiceAvailable ? '<button type="button" class="text-button" data-action="show-voice">声で答える</button>' : ''}`;
 }
 
@@ -514,6 +525,14 @@ const ACTIONS = {
     session.phase = 'asking';
     session.notice = '';
     renderQuiz();
+  },
+  'copy-detail': async () => {
+    try {
+      await navigator.clipboard.writeText(session.failureDetail);
+      showToast('コピーしました');
+    } catch {
+      showToast('コピーできませんでした');
+    }
   },
   'play-model': () => speak(session.verdict.modelText),
   retry: beginAttempt,
