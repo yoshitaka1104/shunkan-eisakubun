@@ -127,6 +127,7 @@ npm test
 | `js/speech.js` | 音声認識と読み上げの入り口。PC と Android の音声認識 |
 | `js/device-speech.js`、`js/transcribe-worker.js` | iPhone と iPad の録音と、端末の中での文字への変換 |
 | `js/diagnostics.js` | 端末の判別と調査用の記録 |
+| `sound-check.html`、`js/sound-check.js` | iPhone の音声出力の確認(調査用。対応が決まったら削除する) |
 | `js/storage.js` | 学習記録の保存 |
 | `data/questions.json` | 問題データ(3レベル、計50問) |
 | `tests/` | 自動テスト |
