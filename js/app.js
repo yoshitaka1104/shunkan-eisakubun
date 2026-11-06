@@ -21,10 +21,10 @@ import {
   speak,
   stopSpeaking,
   unlockSpeech,
-} from './speech.js?v=1.3';
+} from './speech.js?v=1.3.1';
 import { loadProgress, saveProgress } from './storage.js';
 
-const APP_VERSION = 'v1.3';
+const APP_VERSION = 'v1.3.1';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
 const TIME_LIMIT_OPTIONS = [0, 5, 10, 15, 20];

@@ -29,10 +29,17 @@ async function transcribe({ id, audio }) {
 
 const HANDLERS = { load, transcribe };
 
-self.onmessage = async ({ data }) => {
+let queue = Promise.resolve();
+
+async function handle(data) {
   try {
     await HANDLERS[data.type](data);
   } catch (error) {
     postMessage({ type: 'error', id: data.id, message: String(error?.message ?? error) });
   }
+}
+
+// モデルは同時に1件しか動かせないので、途中経過と最終結果を順番に処理する。
+self.onmessage = ({ data }) => {
+  queue = queue.then(() => handle(data));
 };

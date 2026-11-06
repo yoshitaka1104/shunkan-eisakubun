@@ -87,9 +87,10 @@ function useMicrophone(getUserMedia = async () => makeStream()) {
 
 async function listen(getUserMedia) {
   useMicrophone(getUserMedia);
-  const calls = { ready: 0, processing: 0, results: [], errors: [] };
+  const calls = { ready: 0, processing: 0, interim: [], results: [], errors: [] };
   const recognizer = createDeviceRecognizer({
     onReady: () => { calls.ready += 1; },
+    onInterim: (text) => calls.interim.push(text),
     onProcessing: () => { calls.processing += 1; },
     onResult: (candidates) => calls.results.push(candidates),
     onError: (kind, code) => calls.errors.push({ kind, code }),
@@ -426,6 +427,116 @@ describe('録音と文字への変換', () => {
     const { calls } = await listen();
     mock.timers.tick(6000);
     assert.deepEqual(calls.errors, [{ kind: 'no-mic', code: 'no-frames' }]);
+  });
+
+  describe('話している途中の文字', () => {
+    const requestsOf = (worker) => worker.sent.filter(({ type }) => type === 'transcribe');
+    const answer = async (worker, text) => {
+      worker.receive({ type: 'result', id: lastRequest(worker).id, text, elapsedMs: 500 });
+      await settle();
+    };
+
+    /** 話し始めて、最初の途中経過の変換が始まるところまで進める。 */
+    async function startInterim() {
+      const worker = await loadedWorker();
+      const before = requestsOf(worker).length;
+      const session = await listen();
+      emit(session.context, NOISE, 4);
+      emit(session.context, VOICE, 18);
+      assert.equal(requestsOf(worker).length, before + 1);
+      return { worker, before, ...session };
+    }
+
+    it('話し始めてすぐは変換しない', async () => {
+      const worker = await loadedWorker();
+      const before = requestsOf(worker).length;
+      const { context } = await listen();
+      emit(context, NOISE, 4);
+      emit(context, VOICE, 10);
+      assert.equal(requestsOf(worker).length, before);
+    });
+
+    it('話している途中の文字を知らせる', async () => {
+      const { worker, calls } = await startInterim();
+      await answer(worker, ' I am ');
+      assert.deepEqual(calls.interim, ['I am']);
+    });
+
+    it('前の変換が終わるまで、次の変換を始めない', async () => {
+      const { worker, before, context } = await startInterim();
+      emit(context, VOICE, 20);
+      assert.equal(requestsOf(worker).length, before + 1);
+    });
+
+    it('前の変換が終わったら、少し間をあけて次を始める', async () => {
+      const { worker, before, context } = await startInterim();
+      await answer(worker, 'I am');
+      emit(context, VOICE, 5);
+      assert.equal(requestsOf(worker).length, before + 1);
+      emit(context, VOICE, 2);
+      assert.equal(requestsOf(worker).length, before + 2);
+    });
+
+    it('話している部分だけを変換に渡す', async () => {
+      const { worker } = await startInterim();
+      // その時点で録音できている1.05秒分を渡す。
+      assert.equal(lastRequest(worker).audio.length, 16_000 * 1.05);
+    });
+
+    it('話し声が止まったら、最後に話した部分までを変換して、それ以上は繰り返さない', async () => {
+      const { worker, before, context } = await startInterim();
+      await answer(worker, 'I am');
+      emit(context, NOISE, 10);
+      assert.equal(requestsOf(worker).length, before + 2);
+      await answer(worker, 'I am a');
+      emit(context, NOISE, 12);
+      assert.equal(requestsOf(worker).length, before + 2);
+    });
+
+    it('空の途中経過は知らせない', async () => {
+      const { worker, calls } = await startInterim();
+      await answer(worker, '  ');
+      assert.deepEqual(calls.interim, []);
+    });
+
+    it('録音が終わった後に届いた途中経過は無視し、最終結果で判定する', async () => {
+      const { worker, before, calls, context } = await startInterim();
+      const interimId = lastRequest(worker).id;
+      emit(context, VOICE, 2);
+      emit(context, NOISE, 24);
+      await settle();
+      assert.equal(requestsOf(worker).length, before + 2);
+      worker.receive({ type: 'result', id: interimId, text: 'I am', elapsedMs: 500 });
+      await answer(worker, 'I am a student.');
+      assert.deepEqual(calls.interim, []);
+      assert.deepEqual(calls.results, [['I am a student.']]);
+    });
+
+    it('途中経過の変換に失敗しても、最終結果で判定する', async () => {
+      const { worker, calls, context } = await startInterim();
+      worker.receive({ type: 'error', id: lastRequest(worker).id, message: 'busy' });
+      await settle();
+      emit(context, NOISE, 24);
+      await settle();
+      await answer(worker, 'I am a student.');
+      assert.deepEqual(calls.errors, []);
+      assert.deepEqual(calls.results, [['I am a student.']]);
+    });
+
+    it('途中経過の変換に失敗したら、その回はこれ以上変換しない', async () => {
+      const { worker, before, context } = await startInterim();
+      worker.receive({ type: 'error', id: lastRequest(worker).id, message: 'busy' });
+      await settle();
+      emit(context, VOICE, 40);
+      assert.equal(requestsOf(worker).length, before + 1);
+    });
+
+    it('打ち切った後は途中経過を知らせない', async () => {
+      const { worker, recognizer, calls } = await startInterim();
+      recognizer.abort();
+      await answer(worker, 'I am');
+      assert.deepEqual(calls.interim, []);
+    });
   });
 
   it('続けて何度でも録音できる', async () => {

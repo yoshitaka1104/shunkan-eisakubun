@@ -33,6 +33,10 @@ const SPEECH_PADDING_MS = 300;
 const FIRST_FRAME_LIMIT_MS = 6000;
 /** 文字への変換を待つ時間。 */
 const TRANSCRIBE_LIMIT_MS = 30_000;
+/** 話し始めてから、最初の途中経過を出すまでの時間。短すぎる音声は誤変換が多い。 */
+const INTERIM_FIRST_DELAY_MS = 700;
+/** 途中経過の変換が終わってから、次を始めるまでの時間。電池の消費と発熱を抑える。 */
+const INTERIM_GAP_MS = 300;
 
 export function isDeviceSpeechSupported() {
   return Boolean(
@@ -137,7 +141,7 @@ function resetWorker() {
 function loadModel(onProgress) {
   return new Promise((resolve, reject) => {
     const loadedBytes = new Map();
-    worker = new Worker(new URL('./transcribe-worker.js', import.meta.url), { type: 'module' });
+    worker = new Worker(new URL('./transcribe-worker.js?v=1.3.1', import.meta.url), { type: 'module' });
     worker.onerror = (event) => {
       const error = new Error(event.message || 'worker failed');
       reject(error);
@@ -215,13 +219,23 @@ let recognitionCount = 0;
  * onResult か onError のどちらかが、必ず1回だけ呼ばれる(abort した場合を除く)。
  * start は画面のタップの処理の中で呼ぶ。iOS は操作なしでは音声の処理を始められない。
  *
+ * 録音中は、そこまでの音声を繰り返し変換して onInterim で知らせる。
+ * 前の変換が終わってから次を始めるので、端末が遅くても変換待ちはたまらない。
+ *
  * @param {object} handlers
  * @param {() => void} [handlers.onReady] マイクが音を拾い始めたとき。
+ * @param {(text: string) => void} [handlers.onInterim] 話している途中の英文。後から変わることがある。
  * @param {() => void} [handlers.onProcessing] 録音を終え、文字への変換を始めたとき。
  * @param {(candidates: string[]) => void} handlers.onResult
  * @param {(kind: 'no-speech'|'denied'|'no-mic'|'unsupported', code: string) => void} handlers.onError
  */
-export function createDeviceRecognizer({ onReady = () => {}, onProcessing = () => {}, onResult, onError }) {
+export function createDeviceRecognizer({
+  onReady = () => {},
+  onInterim = () => {},
+  onProcessing = () => {},
+  onResult,
+  onError,
+}) {
   recognitionCount += 1;
   logEvent(`#${recognitionCount}`);
 
@@ -237,8 +251,19 @@ export function createDeviceRecognizer({ onReady = () => {}, onProcessing = () =
   let capturing = true;
   let canceled = false;
   let firstFrameTimer = null;
+  let recordedMs = 0;
+  let nextInterimMs = Infinity;
+  let interimBusy = false;
+  let interimCount = 0;
+  let interimSpeechEndMs = 0;
 
   const note = (label) => logEvent(`${label}@${Math.round(performance.now() - startedAt)}`);
+
+  /** 話している部分を切り出して、変換に渡せる形にする。 */
+  const speechAudio = () => {
+    const speech = trimToSpeech(concatenate(chunks), sampleRate, detector.speechRange());
+    return downsample(speech, sampleRate).slice();
+  };
 
   const releaseMicrophone = () => {
     capturing = false;
@@ -261,22 +286,40 @@ export function createDeviceRecognizer({ onReady = () => {}, onProcessing = () =
     if (!capturing) return;
     note('recorded');
     releaseMicrophone();
-    const range = detector.speechRange();
-    if (!range) {
+    if (!detector.speechRange()) {
       onError('no-speech', 'stop');
       return;
     }
     onProcessing();
-    const speech = trimToSpeech(concatenate(chunks), sampleRate, range);
     try {
-      const { text, elapsedMs } = await transcribe(downsample(speech, sampleRate).slice());
-      logEvent(`stt=${elapsedMs}ms`);
+      const { text, elapsedMs } = await transcribe(speechAudio());
+      logEvent(`stt=${elapsedMs}ms interim=${interimCount}`);
       if (canceled) return;
       if (text.trim()) onResult([text.trim()]);
       else onError('no-speech', 'empty');
     } catch (error) {
       logEvent(`stt-error:${error.message}`);
       if (!canceled) onError('unsupported', 'transcribe');
+    }
+  };
+
+  /** 前の変換より後に話した部分があり、次の変換を始められるとき true。 */
+  const canUpdateInterim = () => !interimBusy
+    && recordedMs >= nextInterimMs
+    && detector.speechRange().endMs > interimSpeechEndMs;
+
+  const updateInterim = async () => {
+    interimBusy = true;
+    interimSpeechEndMs = detector.speechRange().endMs;
+    try {
+      const { text } = await transcribe(speechAudio());
+      interimCount += 1;
+      if (capturing && text.trim()) onInterim(text.trim());
+      nextInterimMs = recordedMs + INTERIM_GAP_MS;
+      interimBusy = false;
+    } catch (error) {
+      // 途中経過が出なくても判定はできるので、この回はこれ以上変換しない。
+      logEvent(`interim-error:${error.message}`);
     }
   };
 
@@ -292,13 +335,17 @@ export function createDeviceRecognizer({ onReady = () => {}, onProcessing = () =
     chunks.push(samples);
     const level = rootMeanSquare(samples);
     peak = Math.max(peak, level);
-    const state = detector.feed(level, (samples.length / sampleRate) * 1000);
-    if (state !== 'waiting' && !speechNoted) {
+    const frameMs = (samples.length / sampleRate) * 1000;
+    recordedMs += frameMs;
+    const state = detector.feed(level, frameMs);
+    if (detector.speechRange() && !speechNoted) {
       speechNoted = true;
+      nextInterimMs = recordedMs + INTERIM_FIRST_DELAY_MS;
       note('speech');
     }
     if (state === 'no-speech') fail('no-speech', 'silence');
     if (state === 'end') finishRecording();
+    if (state === 'speaking' && canUpdateInterim()) updateInterim();
   };
 
   const connectMicrophone = async () => {

@@ -5,7 +5,7 @@
  * PC と Android はブラウザの音声認識を使う。
  * iPhone と iPad は標準の音声認識が続けて動かないため、device-speech.js で端末の中で変換する。
  */
-import { createDeviceRecognizer, isDeviceSpeechSupported, prepareDeviceSpeech } from './device-speech.js';
+import { createDeviceRecognizer, isDeviceSpeechSupported, prepareDeviceSpeech } from './device-speech.js?v=1.3.1';
 import { isIOS, logEvent } from './diagnostics.js';
 
 const LANGUAGE = 'en-US';
@@ -220,7 +220,7 @@ function createBrowserRecognizer({ onReady = () => {}, onInterim, onResult, onEr
  *
  * @param {object} handlers
  * @param {() => void} [handlers.onReady] マイクが音を拾い始めたとき。
- * @param {(text: string) => void} [handlers.onInterim] 認識途中の英文。届かない端末もある。
+ * @param {(text: string) => void} [handlers.onInterim] 認識途中の英文。後から変わることがある。
  * @param {() => void} [handlers.onProcessing] 録音を終え、文字への変換を始めたとき。届かない端末もある。
  * @param {(candidates: string[]) => void} handlers.onResult 認識候補。確度の高い順。
  * @param {(kind: 'no-speech'|'network'|'denied'|'no-mic'|'unsupported', code: string) => void} handlers.onError
