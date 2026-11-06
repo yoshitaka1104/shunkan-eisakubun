@@ -76,6 +76,24 @@ npm start
 - 例文は、市販の教材から転載せず、新しく作ります。
 - 問題数を変えた場合は、[tests/questions.test.js](tests/questions.test.js) の問題数も変更します。
 
+追加した文の音声ファイルは、次の手順で作ります。すでにあるファイルは作り直しません。
+
+```bash
+npm install --no-save --no-package-lock kokoro-js @breezystack/lamejs
+```
+
+```bash
+node tools/generate-audio.mjs
+```
+
+音声ファイルがない文は、ブラウザの音声合成で読み上げます。
+
+## 模範解答の音声
+
+模範解答は `audio/` の音声ファイルを再生します。iOS 27 の iPhone の実機では、ブラウザの音声合成は処理が進んでも音が出ないことがありましたが、音声ファイルの再生は録音の直後でも音が出たためです。
+
+音声は [Kokoro-82M](https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX)(Apache-2.0)で作りました。
+
 ## 対応ブラウザ
 
 対象は PC の Chrome です。音声認識に対応していないブラウザでは、自動で文字入力に切り替わります。
@@ -127,7 +145,8 @@ npm test
 | `js/speech.js` | 音声認識と読み上げの入り口。PC と Android の音声認識 |
 | `js/device-speech.js`、`js/transcribe-worker.js` | iPhone と iPad の録音と、端末の中での文字への変換 |
 | `js/diagnostics.js` | 端末の判別と調査用の記録 |
-| `sound-check.html`、`js/sound-check.js` | iPhone の音声出力の確認(調査用。対応が決まったら削除する) |
+| `js/audio-files.js`、`audio/` | 模範解答の音声ファイルとその名前の決まり |
+| `tools/generate-audio.mjs` | 模範解答の音声ファイルを作る道具 |
 | `js/storage.js` | 学習記録の保存 |
 | `data/questions.json` | 問題データ(3レベル、計50問) |
 | `tests/` | 自動テスト |

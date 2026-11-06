@@ -5,6 +5,7 @@ import {
   createRecognizer,
   isRecognitionSupported,
   needsPreparation,
+  speak,
   stopSpeaking,
   unlockSpeech,
 } from '../js/speech.js';
@@ -53,6 +54,30 @@ class FakeRecognition {
   }
 }
 
+/** アプリは再生の要素を1つだけ作るので、テストの間で同じものを使い続ける。 */
+class FakeAudio {
+  static last = null;
+
+  static failPlay = false;
+
+  played = [];
+
+  paused = 0;
+
+  constructor() {
+    FakeAudio.last = this;
+  }
+
+  play() {
+    this.played.push(this.src);
+    return FakeAudio.failPlay ? Promise.reject(new Error('blocked')) : Promise.resolve();
+  }
+
+  pause() {
+    this.paused += 1;
+  }
+}
+
 class FakeSynthesis {
   queue = [];
 
@@ -90,6 +115,8 @@ beforeEach(() => {
   FakeRecognition.throwOnStart = false;
   FakeRecognition.silentAbort = false;
   globalThis.window = { webkitSpeechRecognition: FakeRecognition, speechSynthesis: new FakeSynthesis() };
+  FakeAudio.failPlay = false;
+  globalThis.Audio = FakeAudio;
   globalThis.SpeechSynthesisUtterance = class {
     constructor(text) {
       this.text = text;
@@ -377,15 +404,89 @@ describe('認識が途中で止まったとき', () => {
 });
 
 describe('読み上げの準備', () => {
-  it('iOS では無音の読み上げで使えるようにする', () => {
+  it('タップの中で無音のファイルを鳴らし、後から再生できるようにする', () => {
+    unlockSpeech();
+    assert.equal(FakeAudio.last.played.at(-1), 'audio/silence.mp3');
+  });
+
+  it('iOS では音声合成も無音で使えるようにする', () => {
     useDevice(IPHONE);
     unlockSpeech();
     assert.equal(window.speechSynthesis.queue[0].volume, 0);
   });
 
-  it('PC では何もしない', () => {
+  it('PC では音声合成の準備はいらない', () => {
     unlockSpeech();
     assert.equal(window.speechSynthesis.queue.length, 0);
+  });
+});
+
+describe('模範解答の読み上げ', () => {
+  it('音声ファイルを再生する', () => {
+    speak("I'm a student.");
+    assert.equal(FakeAudio.last.played.at(-1), 'audio/im-a-student.mp3');
+    assert.equal(window.speechSynthesis.queue.length, 0);
+  });
+
+  it('再生が終わったら知らせる', () => {
+    let done = 0;
+    speak('I am a student.', () => { done += 1; });
+    FakeAudio.last.onended();
+    assert.equal(done, 1);
+  });
+
+  it('ファイルがなければ、ブラウザの音声合成で読み上げる', () => {
+    let done = 0;
+    speak('My own answer.', () => { done += 1; });
+    FakeAudio.last.onerror();
+    assert.equal(window.speechSynthesis.queue[0].text, 'My own answer.');
+    window.speechSynthesis.finish();
+    assert.equal(done, 1);
+  });
+
+  it('再生を拒否されたら、ブラウザの音声合成で読み上げる', async () => {
+    FakeAudio.failPlay = true;
+    speak('I am a student.');
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.equal(window.speechSynthesis.queue[0].text, 'I am a student.');
+  });
+
+  it('終了の通知が届かなくても、学習が止まらない', () => {
+    let done = 0;
+    speak('Short.', () => { done += 1; });
+    mock.timers.tick(2040);
+    assert.equal(done, 1);
+  });
+
+  it('止めたら再生を止め、完了を知らせない', () => {
+    let done = 0;
+    speak('I am a student.', () => { done += 1; });
+    const paused = FakeAudio.last.paused;
+    stopSpeaking();
+    assert.equal(FakeAudio.last.paused, paused + 1);
+    assert.equal(FakeAudio.last.onended, null);
+    mock.timers.tick(10_000);
+    assert.equal(done, 0);
+  });
+
+  it('止めた後に再生の失敗が届いても、音声合成に切り替えない', async () => {
+    FakeAudio.failPlay = true;
+    speak('I am a student.');
+    stopSpeaking();
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.equal(window.speechSynthesis.queue.length, 0);
+  });
+
+  it('次の読み上げを始めたら、前の完了は知らせない', () => {
+    const done = [];
+    speak('First.', () => done.push('first'));
+    const firstEnded = FakeAudio.last.onended;
+    speak('Second.', () => done.push('second'));
+    firstEnded();
+    FakeAudio.last.onended();
+    assert.deepEqual(done, ['second']);
   });
 });
 

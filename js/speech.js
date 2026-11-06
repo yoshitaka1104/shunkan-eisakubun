@@ -5,6 +5,7 @@
  * PC と Android はブラウザの音声認識を使う。
  * iPhone と iPad は標準の音声認識が続けて動かないため、device-speech.js で端末の中で変換する。
  */
+import { audioFileFor, SILENCE_FILE } from './audio-files.js';
 import { createDeviceRecognizer, isDeviceSpeechSupported, prepareDeviceSpeech } from './device-speech.js?v=1.3.1';
 import { isIOS, logEvent } from './diagnostics.js';
 
@@ -231,16 +232,46 @@ export function createRecognizer(handlers) {
 
 let speakToken = 0;
 let speakTimer = null;
+let player = null;
+
+/**
+ * 音声ファイルの再生に使う要素。
+ * iOS は一度タップで鳴らした要素なら、後から操作なしで鳴らせるので、1つを使い回す。
+ */
+function audioPlayer() {
+  player ??= new Audio();
+  return player;
+}
+
+function stopPlayer() {
+  if (!player) return;
+  player.onended = null;
+  player.onerror = null;
+  player.pause();
+}
 
 export function stopSpeaking() {
   speakToken += 1;
   clearTimeout(speakTimer);
+  stopPlayer();
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+}
+
+/** ブラウザの音声合成で読み上げる。iPhone の実機では、音が出ないことがある。 */
+function speakWithSynthesis(text, finish) {
+  if (!('speechSynthesis' in window)) return;
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = LANGUAGE;
+  utterance.rate = 0.95;
+  utterance.onend = finish;
+  utterance.onerror = finish;
+  window.speechSynthesis.speak(utterance);
 }
 
 /**
  * 英文を読み上げる。
- * 読み上げ終了の通知が届かない環境でも学習が止まらないよう、一定時間で onDone を呼ぶ。
+ * 用意した音声ファイルを再生し、ファイルがない文(利用者が追加した正解例など)はブラウザの音声合成を使う。
+ * 終了の通知が届かない環境でも学習が止まらないよう、一定時間で onDone を呼ぶ。
  */
 export function speak(text, onDone = () => {}) {
   stopSpeaking();
@@ -252,22 +283,23 @@ export function speak(text, onDone = () => {}) {
     clearTimeout(speakTimer);
     onDone();
   };
+  const useSynthesis = () => {
+    if (token === speakToken) speakWithSynthesis(text, finish);
+  };
 
-  if (!('speechSynthesis' in window)) {
-    speakTimer = setTimeout(finish, 1200);
-    return;
-  }
   speakTimer = setTimeout(finish, Math.min(8000, 1500 + text.length * 90));
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = LANGUAGE;
-  utterance.rate = 0.95;
-  utterance.onend = finish;
-  utterance.onerror = finish;
-  window.speechSynthesis.speak(utterance);
+  const audio = audioPlayer();
+  audio.onended = finish;
+  audio.onerror = useSynthesis;
+  audio.src = audioFileFor(text);
+  audio.play().catch(useSynthesis);
 }
 
-/** iOS は最初の読み上げに画面操作が必要なので、タップの処理の中で呼んで読み上げを使えるようにする。 */
+/** iOS は最初の再生に画面操作が必要なので、タップの処理の中で呼んで再生できるようにする。 */
 export function unlockSpeech() {
+  const audio = audioPlayer();
+  audio.src = SILENCE_FILE;
+  audio.play().catch(() => {});
   if (!isIOS() || !('speechSynthesis' in window)) return;
   const utterance = new SpeechSynthesisUtterance(' ');
   utterance.volume = 0;

@@ -21,10 +21,10 @@ import {
   speak,
   stopSpeaking,
   unlockSpeech,
-} from './speech.js?v=1.3.1';
+} from './speech.js?v=1.4';
 import { loadProgress, saveProgress } from './storage.js';
 
-const APP_VERSION = 'v1.3.2';
+const APP_VERSION = 'v1.4';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
 const TIME_LIMIT_OPTIONS = [0, 5, 10, 15, 20];
@@ -135,7 +135,7 @@ function renderHome() {
         </button>
       </div>
       ${isRecognitionSupported() ? '' : `<p class="notice">${UNSUPPORTED_MESSAGE}</p>`}
-      <p class="version">${APP_VERSION}${isIOS() ? ' / <a href="sound-check.html">音声チェック</a>' : ''}</p>
+      <p class="version">${APP_VERSION}</p>
     </main>`;
 }
 
