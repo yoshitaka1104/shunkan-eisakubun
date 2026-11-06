@@ -25,7 +25,7 @@ import {
 } from './speech.js?v=1.2';
 import { loadProgress, saveProgress } from './storage.js';
 
-const APP_VERSION = 'v1.2';
+const APP_VERSION = 'v1.2.1';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
 const TIME_LIMIT_OPTIONS = [0, 5, 10, 15, 20];
@@ -133,7 +133,7 @@ function renderHome() {
         </button>
       </div>
       ${isRecognitionSupported() ? '' : `<p class="notice">${UNSUPPORTED_MESSAGE}</p>`}
-      <p class="version">${APP_VERSION}</p>
+      <p class="version">${APP_VERSION}${isIOS() ? ' / <a href="mic-diagnosis.html">マイク診断</a>' : ''}</p>
     </main>`;
 }
 

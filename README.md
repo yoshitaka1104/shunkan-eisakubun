@@ -124,6 +124,7 @@ npm test
 | `js/judge.js` | 正誤判定 |
 | `js/progress.js` | 出題の選択と学習記録の更新 |
 | `js/speech.js` | 音声認識と読み上げ |
+| `mic-diagnosis.html`、`js/mic-diagnosis.js` | iPhone のマイクの診断(調査用。対応が決まったら削除する) |
 | `js/storage.js` | 学習記録の保存 |
 | `data/questions.json` | 問題データ(3レベル、計50問) |
 | `tests/` | 自動テスト |
