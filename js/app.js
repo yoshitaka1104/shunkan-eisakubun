@@ -2,6 +2,7 @@
  * 画面の表示と学習の流れを担当する。
  * 判定は judge.js、記録は progress.js、音声は speech.js に任せる。
  */
+import { diagnostics, isIOS } from './diagnostics.js';
 import { judge } from './judge.js';
 import {
   addCustomAnswer,
@@ -14,18 +15,16 @@ import {
 } from './progress.js';
 import {
   createRecognizer,
-  diagnostics,
-  isIOS,
   isRecognitionSupported,
-  preflightMicrophone,
-  primeForListening,
+  needsPreparation,
+  prepareRecognition,
   speak,
   stopSpeaking,
   unlockSpeech,
-} from './speech.js?v=1.2';
+} from './speech.js?v=1.3';
 import { loadProgress, saveProgress } from './storage.js';
 
-const APP_VERSION = 'v1.2.1';
+const APP_VERSION = 'v1.3';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
 const TIME_LIMIT_OPTIONS = [0, 5, 10, 15, 20];
@@ -33,6 +32,8 @@ const AFTER_CORRECT_DELAY_MS = 500;
 /** マイクの失敗がこの回数続いたら、最初から文字入力を出す。 */
 const BLOCKING_FAILURE_LIMIT = 2;
 const TOAST_MS = 2500;
+/** iPhone と iPad で初回にダウンロードするデータの大きさ。 */
+const DEVICE_MODEL_MB = 70;
 
 const VERDICT_LABELS = { correct: '正解', close: '惜しい', wrong: '不正解' };
 
@@ -46,6 +47,7 @@ const RECOGNITION_MESSAGES = {
 const IOS_RETRY_HINT = '続けて失敗するときは、「文字で入力」からキーボードのマイクを使ってください。';
 const IOS_DICTATION_HINT = 'キーボードのマイクを押すと、声で入力できます。英語のキーボードに切り替えてから話してください。';
 const UNSUPPORTED_MESSAGE = 'このブラウザは音声入力に対応していません。文字で回答してください。';
+const PREPARE_FAILED_MESSAGE = '音声認識を準備できませんでした。通信状況を確認してください。今回は文字で回答してください。';
 const BLOCKING_ERRORS = new Set(['denied', 'no-mic', 'unsupported']);
 
 const MIC_ICON = `<svg viewBox="0 0 24 24" width="36" height="36" aria-hidden="true" fill="none"
@@ -133,17 +135,24 @@ function renderHome() {
         </button>
       </div>
       ${isRecognitionSupported() ? '' : `<p class="notice">${UNSUPPORTED_MESSAGE}</p>`}
-      <p class="version">${APP_VERSION}${isIOS() ? ' / <a href="mic-diagnosis.html">マイク診断</a>' : ''}</p>
+      <p class="version">${APP_VERSION}</p>
     </main>`;
 }
+
+const BROWSER_SPEECH_NOTICE = `
+  <p>声で答えると、ブラウザの音声認識機能が英語を文字に変換します。</p>
+  <p>ブラウザによっては、変換のために音声が提供元のサーバーへ送られます。このアプリ自身は、音声を保存しません。</p>`;
+
+const DEVICE_SPEECH_NOTICE = `
+  <p>声で答えると、この端末の中で英語を文字に変換します。音声は端末の外へ送らず、保存もしません。</p>
+  <p>初回だけ、音声認識モデル(約${DEVICE_MODEL_MB}MB)をダウンロードします。</p>`;
 
 function renderSpeechNotice() {
   root.innerHTML = `
     <main class="screen notice-screen">
       <h1>音声入力について</h1>
-      <p>声で答えると、ブラウザの音声認識機能が英語を文字に変換します。</p>
-      <p>ブラウザによっては、変換のために音声が提供元のサーバーへ送られます。このアプリ自身は、音声を保存しません。学習記録はこの端末の中だけに保存します。</p>
-      <p>マイクは、マイクボタンを押したときだけ起動します。</p>
+      ${isIOS() ? DEVICE_SPEECH_NOTICE : BROWSER_SPEECH_NOTICE}
+      <p>学習記録はこの端末の中だけに保存します。マイクは、マイクボタンを押したときだけ起動します。</p>
       <button type="button" class="primary" data-action="accept-notice">わかりました</button>
       <button type="button" class="text-button" data-action="go-home">戻る</button>
     </main>`;
@@ -159,6 +168,35 @@ function requestStart(picked) {
   startSession(picked);
 }
 
+function renderPreparing() {
+  root.innerHTML = `
+    <main class="screen notice-screen">
+      <h1>音声認識の準備</h1>
+      <p data-preparing>準備しています</p>
+      <p>初回だけ、音声認識モデル(約${DEVICE_MODEL_MB}MB)をダウンロードします。Wi-Fi での利用をおすすめします。2回目からは数秒で終わります。</p>
+      <button type="button" class="text-button" data-action="go-home">やめる</button>
+    </main>`;
+}
+
+function showPreparingProgress(loadedBytes) {
+  const label = root.querySelector('[data-preparing]');
+  if (label) label.textContent = `ダウンロードしています(${Math.round(loadedBytes / 1_000_000)}MB)`;
+}
+
+/** 音声認識モデルを読み込む。失敗したら、この学習は文字入力で続ける。 */
+async function prepareVoice() {
+  const current = session;
+  renderPreparing();
+  try {
+    await prepareRecognition(showPreparingProgress);
+  } catch (error) {
+    current.voiceAvailable = false;
+    current.preferTyping = true;
+    current.notice = PREPARE_FAILED_MESSAGE;
+    current.preparationError = `${error.message} ${diagnostics()}`;
+  }
+}
+
 async function startSession(picked) {
   const voiceAvailable = isRecognitionSupported();
   session = {
@@ -170,16 +208,15 @@ async function startSession(picked) {
     blockingFailures: 0,
     notice: voiceAvailable ? '' : UNSUPPORTED_MESSAGE,
     failureDetail: '',
+    preparationError: '',
     phase: 'asking',
     verdict: null,
     timedOut: false,
   };
   unlockSpeech();
-  if (voiceAvailable && isIOS() && !(await preflightMicrophone())) {
-    session.preferTyping = true;
-    session.notice = RECOGNITION_MESSAGES.denied;
-  }
-  beginAttempt();
+  if (voiceAvailable && needsPreparation()) await prepareVoice();
+  // 準備の途中で「やめる」を押した場合は、始めない。
+  if (session?.queue === picked) beginAttempt();
 }
 
 function currentQuestion() {
@@ -250,10 +287,23 @@ function nextQuestion() {
   beginAttempt();
 }
 
+function showListenHint(text) {
+  const hint = root.querySelector('[data-hint]');
+  if (hint) hint.textContent = text;
+}
+
 function showMicReady() {
   root.querySelector('[data-mic]')?.classList.add('is-listening');
-  const hint = root.querySelector('[data-hint]');
-  if (hint) hint.textContent = '聞いています。話し終えたらタップ';
+  showListenHint('聞いています。話し終えたらタップ');
+}
+
+function showProcessing() {
+  const mic = root.querySelector('[data-mic]');
+  if (mic) {
+    mic.classList.remove('is-listening');
+    mic.disabled = true;
+  }
+  showListenHint('文字に変換しています');
 }
 
 function startListening() {
@@ -262,12 +312,9 @@ function startListening() {
   session.phase = 'listening';
   session.notice = '';
   renderQuiz();
-  primeForListening(startRecognition);
-}
-
-function startRecognition() {
   recognizer = createRecognizer({
     onReady: showMicReady,
+    onProcessing: showProcessing,
     onInterim(text) {
       const interim = root.querySelector('[data-interim]');
       if (interim) interim.textContent = text;
@@ -348,11 +395,12 @@ function listeningPanel() {
 }
 
 function failureDetailHtml() {
-  if (!session.failureDetail) return '';
+  const detail = session.failureDetail || session.preparationError;
+  if (!detail) return '';
   return `
     <details class="failure-detail">
       <summary>詳細</summary>
-      <p lang="en">${escapeHtml(session.failureDetail)}</p>
+      <p lang="en">${escapeHtml(detail)}</p>
       <button type="button" class="text-button" data-action="copy-detail">コピー</button>
     </details>`;
 }
@@ -528,7 +576,7 @@ const ACTIONS = {
   },
   'copy-detail': async () => {
     try {
-      await navigator.clipboard.writeText(session.failureDetail);
+      await navigator.clipboard.writeText(session.failureDetail || session.preparationError);
       showToast('コピーしました');
     } catch {
       showToast('コピーできませんでした');

@@ -1,11 +1,10 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+import { diagnostics, isIOS } from '../js/diagnostics.js';
 import {
   createRecognizer,
-  diagnostics,
-  isIOS,
-  primeForListening,
-  speak,
+  isRecognitionSupported,
+  needsPreparation,
   stopSpeaking,
   unlockSpeech,
 } from '../js/speech.js';
@@ -125,6 +124,32 @@ describe('端末の判別', () => {
 
   it('Windows は iOS と判別しない', () => {
     assert.equal(isIOS(), false);
+  });
+});
+
+describe('音声認識の使い分け', () => {
+  it('PC はブラウザの音声認識を使う', () => {
+    assert.equal(isRecognitionSupported(), true);
+    assert.equal(needsPreparation(), false);
+    listen();
+    assert.equal(FakeRecognition.instances.length, 1);
+  });
+
+  it('PC でブラウザが音声認識を持たなければ、対応なしとする', () => {
+    globalThis.window = {};
+    assert.equal(isRecognitionSupported(), false);
+  });
+
+  it('iOS はブラウザの音声認識を使わず、準備が必要', () => {
+    useDevice(IPHONE);
+    assert.equal(needsPreparation(), true);
+    createRecognizer({ onResult() {}, onError() {} });
+    assert.equal(FakeRecognition.instances.length, 0);
+  });
+
+  it('iOS でマイクを使えない環境は、対応なしとする', () => {
+    useDevice(IPHONE);
+    assert.equal(isRecognitionSupported(), false);
   });
 });
 
@@ -306,9 +331,9 @@ describe('エラー', () => {
   });
 
   it('調査用の記録は、ブラウザの版と認識の回数を含む', () => {
-    useDevice({ ...IPHONE, userAgent: `${IPHONE.userAgent} Version/27.2 Mobile/15E148 Safari/604.1` });
+    useDevice({ ...MAC, userAgent: `${MAC.userAgent} Version/27.2 Safari/605.1.15` });
     listen();
-    assert.match(diagnostics(), /^iOS Safari\/27\.2 /);
+    assert.match(diagnostics(), /^PC Safari\/27\.2 /);
     assert.match(diagnostics(), /#\d+$/);
   });
 
@@ -319,9 +344,7 @@ describe('エラー', () => {
   });
 });
 
-describe('iOS で報告されている動き', () => {
-  beforeEach(() => useDevice(IPHONE));
-
+describe('認識が途中で止まったとき', () => {
   it('開始直後に何も起きず終了しても、エラーとして返す', () => {
     const { calls, recognition } = listen();
     recognition.onend();
@@ -337,36 +360,6 @@ describe('iOS で報告されている動き', () => {
     assert.equal(calls.errors[0].kind, 'no-speech');
   });
 
-  it('話し終えたら、stop を使わず abort で止めて途中結果で判定する', () => {
-    const { calls, recognition } = listen();
-    recognition.onstart();
-    recognition.emitResult(['I am a student'], false);
-    mock.timers.tick(1499);
-    assert.equal(recognition.aborted, 0);
-    mock.timers.tick(1);
-    assert.equal(recognition.aborted, 1);
-    assert.equal(recognition.stopped, 0);
-    assert.deepEqual(calls.results, [['I am a student']]);
-  });
-
-  it('話し続けている間は止めない', () => {
-    const { recognition } = listen();
-    recognition.onstart();
-    recognition.emitResult(['I am'], false);
-    mock.timers.tick(1400);
-    recognition.emitResult(['I am a student'], false);
-    mock.timers.tick(1400);
-    assert.equal(recognition.aborted, 0);
-  });
-
-  it('話し終えるボタンでも、abort で止めて途中結果で判定する', () => {
-    const { recognizer, calls, recognition } = listen();
-    recognition.emitResult(['I am a student'], false);
-    recognizer.stop();
-    assert.equal(recognition.stopped, 0);
-    assert.deepEqual(calls.results, [['I am a student']]);
-  });
-
   it('イベントが何も届かなくても、学習が止まらない', () => {
     const { calls } = listen();
     mock.timers.tick(20_000);
@@ -380,76 +373,6 @@ describe('iOS で報告されている動き', () => {
     recognition.onaudiostart();
     mock.timers.tick(12_000);
     assert.equal(calls.errors[0].code, 'timeout');
-  });
-
-  it('何も話さずに話し終えるボタンを押したら、聞き取れなかったことにする', () => {
-    const { recognizer, calls, recognition } = listen();
-    recognition.onstart();
-    recognizer.stop();
-    assert.equal(calls.errors[0].kind, 'no-speech');
-    assert.equal(calls.errors[0].code, 'stop');
-  });
-});
-
-describe('次の認識の準備', () => {
-  function finishSpeech() {
-    speak('done');
-    window.speechSynthesis.finish();
-  }
-
-  beforeEach(() => {
-    useDevice(IPHONE);
-    finishSpeech();
-  });
-
-  it('iOS で認識の後に読み上げがなければ、短い音声を流してから始める', () => {
-    listen();
-    let started = false;
-    primeForListening(() => { started = true; });
-    assert.equal(started, false);
-    assert.equal(window.speechSynthesis.queue.length, 1);
-    window.speechSynthesis.finish();
-    assert.equal(started, true);
-  });
-
-  it('認識の後に読み上げが済んでいれば、音声を流さず始める', () => {
-    listen();
-    finishSpeech();
-    let started = false;
-    primeForListening(() => { started = true; });
-    assert.equal(started, true);
-    assert.equal(window.speechSynthesis.queue.length, 0);
-  });
-
-  it('最初の認識では、音声を流さず始める', () => {
-    let started = false;
-    primeForListening(() => { started = true; });
-    assert.equal(started, true);
-  });
-
-  it('読み上げの終了が届かなくても、認識を始める', () => {
-    listen();
-    let started = false;
-    primeForListening(() => { started = true; });
-    mock.timers.tick(1680);
-    assert.equal(started, true);
-  });
-
-  it('読み上げを止めたら、認識を始めない', () => {
-    listen();
-    let started = false;
-    primeForListening(() => { started = true; });
-    speak('other');
-    mock.timers.tick(10_000);
-    assert.equal(started, false);
-  });
-
-  it('PC では音声を流さず始める', () => {
-    listen();
-    useDevice(WINDOWS);
-    let started = false;
-    primeForListening(() => { started = true; });
-    assert.equal(started, true);
   });
 });
 
