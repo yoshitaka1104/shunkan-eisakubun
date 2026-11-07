@@ -2,7 +2,8 @@
  * 画面の表示と学習の流れを担当する。
  * 判定は judge.js、記録は progress.js、音声は speech.js に任せる。
  */
-import { diagnostics, isIOS } from './diagnostics.js';
+import { BackupError, backupFileName, createBackup, readBackup, summarizeProgress } from './backup.js';
+import { diagnostics, isIOS, logEvent } from './diagnostics.js';
 import { judge } from './judge.js?v=1.5';
 import {
   addCustomAnswer,
@@ -22,9 +23,15 @@ import {
   stopSpeaking,
   unlockSpeech,
 } from './speech.js?v=1.4';
-import { loadProgress, saveProgress } from './storage.js';
+import {
+  isStandalone,
+  isStoragePersisted,
+  loadProgress,
+  requestPersistentStorage,
+  saveProgress,
+} from './storage.js?v=1.6';
 
-const APP_VERSION = 'v1.5';
+const APP_VERSION = 'v1.6';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const LEVEL_NAMES = { 1: '小学校', 2: '中学校', 3: '高校' };
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
@@ -68,6 +75,8 @@ let timerId = null;
 let timerRatio = 1;
 let advanceTimer = null;
 let toastTimer = null;
+/** 「記録の保存」画面で、読み込む前に確認している記録と、読み込めなかった理由。 */
+let backupState = { pending: null, error: '' };
 
 function escapeHtml(value) {
   const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -140,8 +149,189 @@ function renderHome() {
         </button>
       </div>
       ${isRecognitionSupported() ? '' : `<p class="notice">${UNSUPPORTED_MESSAGE}</p>`}
-      <p class="version">${APP_VERSION}</p>
+      ${shouldShowHomeScreenTip() ? HOME_SCREEN_TIP : ''}
+      <p class="version">${APP_VERSION} · <button type="button" class="link-button" data-action="show-backup">記録の保存</button></p>
     </main>`;
+}
+
+const HOME_SCREEN_TIP = `
+  <div class="tip">
+    <p>ホーム画面に追加して開くと、記録が消えにくくなります。</p>
+    <div class="tip-actions">
+      <button type="button" class="text-button" data-action="show-backup">方法を見る</button>
+      <button type="button" class="text-button" data-action="hide-home-tip">表示しない</button>
+    </div>
+  </div>`;
+
+/** iPhone の Safari では、使わない期間が続くと記録が消えることがあるので、ホーム画面への追加を勧める。 */
+function shouldShowHomeScreenTip() {
+  return isIOS() && !isStandalone() && !progress.homeScreenTipHidden;
+}
+
+function pad2(value) {
+  return String(value).padStart(2, '0');
+}
+
+function formatDateTime(value) {
+  const date = new Date(value);
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+}
+
+const HOME_SCREEN_GUIDE = `
+  <section class="backup-section">
+    <h2>ホーム画面に追加する</h2>
+    <p>iPhone の Safari は、しばらく使わないと保存した記録を消すことがあります。ホーム画面に追加したアプリは、その対象外とされています。</p>
+    <ol class="steps">
+      <li>下の「記録を書き出す」で今の記録を書き出し、「ファイル」に保存します。</li>
+      <li>Safari の共有ボタンから「ホーム画面に追加」を選びます。共有ボタンが見当たらないときは、アドレス欄の横のメニューから開きます。</li>
+      <li>「Webアプリとして開く」が表示されたらオンにして、「追加」を押します。</li>
+      <li>ホーム画面のアイコンから開き、この画面で書き出したファイルを読み込みます。</li>
+    </ol>
+    <p class="hint">ホーム画面のアプリは、Safari とは別の場所に記録を保存するため、記録は自動では引き継がれません。初めて声で答えるときは、音声認識の準備とマイクの許可がもう一度必要です。</p>
+  </section>`;
+
+function confirmPanel() {
+  const { progress: incoming, exportedAt } = backupState.pending;
+  const known = knownQuestionIds();
+  const next = summarizeProgress(incoming, known);
+  const current = summarizeProgress(progress, known);
+  const when = exportedAt ? `${formatDateTime(exportedAt)}に書き出した記録です。` : '書き出した日時が分からない記録です。';
+  const warning = current.attempts > next.attempts
+    ? '<p class="notice">今の記録のほうが回答数が多いです。置き換えると、今の記録は戻せません。</p>'
+    : '';
+  return `
+    <div class="confirm" role="group" aria-label="読み込む記録の確認">
+      <p>${when}</p>
+      <p>回答${next.attempts}回、${next.questions}問、追加した正解例${next.customAnswers}文</p>
+      <p>今の記録(回答${current.attempts}回)を、この内容で置き換えます。</p>
+      ${warning}
+      <div class="actions">
+        <button type="button" class="primary" data-action="apply-backup">置き換える</button>
+        <button type="button" class="secondary" data-action="cancel-backup">やめる</button>
+      </div>
+    </div>`;
+}
+
+function renderBackup() {
+  const standalone = isStandalone();
+  const summary = summarizeProgress(progress, knownQuestionIds());
+  root.innerHTML = `
+    <main class="screen backup">
+      <header class="sub-head">
+        <button type="button" class="text-button" data-action="go-home">戻る</button>
+      </header>
+      <div class="backup-intro">
+        <h1>記録の保存</h1>
+        <p>学習記録はこの端末の中だけに保存されます。消えたときに戻せるよう、ときどき書き出して保存してください。</p>
+      </div>
+      <dl class="status">
+        <div><dt>開き方</dt><dd>${standalone ? 'ホーム画面のアプリ' : 'ブラウザ'}</dd></div>
+        <div><dt>保存の保護</dt><dd data-persisted>確認しています</dd></div>
+        <div><dt>前回の書き出し</dt><dd>${progress.lastBackupAt ? formatDateTime(progress.lastBackupAt) : 'まだありません'}</dd></div>
+        <div><dt>今の記録</dt><dd>回答${summary.attempts}回、${summary.questions}問</dd></div>
+      </dl>
+      ${isIOS() && !standalone ? HOME_SCREEN_GUIDE : ''}
+      <section class="backup-section">
+        <h2>書き出す</h2>
+        <p>記録を1つのファイルにします。iPhone では、表示された画面で「"ファイル"に保存」を選ぶと、「ファイル」アプリに残せます。</p>
+        <button type="button" class="primary" data-action="export-backup">記録を書き出す</button>
+        <button type="button" class="text-button" data-action="copy-backup">テキストでコピー</button>
+      </section>
+      <section class="backup-section" data-import>
+        <h2>読み込む</h2>
+        <p>書き出したファイルを選ぶと、今の記録をその内容で置き換えます。置き換える前に、内容を確認できます。</p>
+        ${backupState.error ? `<p class="notice">${escapeHtml(backupState.error)}</p>` : ''}
+        ${backupState.pending ? confirmPanel() : ''}
+        <label class="secondary file-button" for="backup-file">ファイルを選ぶ</label>
+        <input class="visually-hidden" id="backup-file" type="file" accept=".json,application/json">
+        <details class="paste">
+          <summary>テキストを貼り付けて読み込む</summary>
+          <label for="backup-text">コピーした記録のテキスト</label>
+          <textarea id="backup-text" rows="5" autocomplete="off" spellcheck="false"></textarea>
+          <button type="button" class="secondary" data-action="read-pasted-backup">貼り付けた記録を読み込む</button>
+        </details>
+      </section>
+    </main>`;
+  showPersistence();
+}
+
+async function showPersistence() {
+  const persisted = await isStoragePersisted();
+  const label = root.querySelector('[data-persisted]');
+  if (!label) return;
+  if (persisted === null) label.textContent = 'このブラウザは対応していません';
+  else label.textContent = persisted ? '有効' : '無効(ホーム画面のアプリで有効になりやすくなります)';
+}
+
+function openBackup() {
+  backupState = { pending: null, error: '' };
+  renderBackup();
+  window.scrollTo(0, 0);
+}
+
+function markBackedUp(now) {
+  progress.lastBackupAt = now.toISOString();
+  saveProgress(progress);
+}
+
+/** iPhone では共有の画面から「ファイル」に保存し、それ以外ではファイルとしてダウンロードする。 */
+async function exportBackup() {
+  const now = new Date();
+  const file = new File([createBackup(progress, now)], backupFileName(now), { type: 'application/json' });
+  try {
+    if (isIOS() && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title: '瞬間英作文の記録' });
+    } else {
+      const url = URL.createObjectURL(file);
+      const link = Object.assign(document.createElement('a'), { href: url, download: file.name });
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    }
+    markBackedUp(now);
+    renderBackup();
+    showToast('記録を書き出しました');
+  } catch (error) {
+    if (error?.name === 'AbortError') return;
+    showToast('書き出せませんでした。「テキストでコピー」を試してください');
+  }
+}
+
+async function copyBackup() {
+  const now = new Date();
+  try {
+    await navigator.clipboard.writeText(createBackup(progress, now));
+    markBackedUp(now);
+    renderBackup();
+    showToast('コピーしました。メモなどに貼り付けて保存してください');
+  } catch {
+    showToast('コピーできませんでした。「記録を書き出す」を試してください');
+  }
+}
+
+/** 読み込む記録を確かめ、置き換える前の確認を表示する。 */
+function prepareImport(text) {
+  try {
+    backupState = { pending: readBackup(text), error: '' };
+  } catch (error) {
+    backupState = {
+      pending: null,
+      error: error instanceof BackupError ? error.message : 'このファイルは読み込めません。アプリで書き出したファイルを選んでください。',
+    };
+  }
+  renderBackup();
+  root.querySelector('[data-import]')?.scrollIntoView({ block: 'start' });
+}
+
+function applyBackup() {
+  const { progress: incoming } = backupState.pending;
+  for (const key of Object.keys(progress)) delete progress[key];
+  Object.assign(progress, incoming);
+  saveProgress(progress);
+  backupState = { pending: null, error: '' };
+  renderBackup();
+  showToast('記録を読み込みました');
 }
 
 const BROWSER_SPEECH_NOTICE = `
@@ -599,6 +789,20 @@ const ACTIONS = {
   },
   'go-home': goHome,
   quit: goHome,
+  'show-backup': openBackup,
+  'hide-home-tip': () => {
+    progress.homeScreenTipHidden = true;
+    saveProgress(progress);
+    renderHome();
+  },
+  'export-backup': exportBackup,
+  'copy-backup': copyBackup,
+  'read-pasted-backup': () => prepareImport(root.querySelector('#backup-text')?.value ?? ''),
+  'apply-backup': applyBackup,
+  'cancel-backup': () => {
+    backupState = { pending: null, error: '' };
+    renderBackup();
+  },
 };
 
 root.addEventListener('click', (event) => {
@@ -613,6 +817,12 @@ root.addEventListener('submit', (event) => {
   else input.focus();
 });
 
+root.addEventListener('change', async (event) => {
+  if (event.target.id !== 'backup-file') return;
+  const [file] = event.target.files;
+  if (file) prepareImport(await file.text());
+});
+
 // 文字入力では、入力を始めた時点を回答開始として時間を止める。
 root.addEventListener('input', (event) => {
   if (event.target.id === 'answer-input' && event.target.value) stopTimer();
@@ -624,6 +834,7 @@ async function main() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     questions = await response.json();
     renderHome();
+    if (isStandalone()) requestPersistentStorage().then((granted) => logEvent(`persist=${granted}`));
   } catch {
     root.innerHTML = `
       <main class="screen notice-screen">

@@ -11,6 +11,8 @@ export function emptyProgress() {
     speechNoticeSeen: false,
     stats: {},
     customAnswers: {},
+    /** 最後に記録を書き出した日時(ISO 形式)。 */
+    lastBackupAt: null,
   };
 }
 

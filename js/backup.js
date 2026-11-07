@@ -1,0 +1,126 @@
+/**
+ * 学習記録の書き出しと読み込み。
+ * 記録は端末の中にしかないので、消えたときや、Safari とホーム画面のアプリの間で移すときに使う。
+ * 読み込むファイルは手で書き換えられている可能性があるため、使える値だけを取り出す。
+ */
+import { emptyProgress } from './progress.js';
+
+const APP_ID = 'shunkan-eisakubun';
+const FORMAT_VERSION = 1;
+const RESULTS = ['correct', 'close', 'wrong'];
+const MAX_CUSTOM_ANSWERS = 20;
+const MAX_ANSWER_LENGTH = 200;
+const MAX_TIME_LIMIT_SEC = 60;
+
+export class BackupError extends Error {}
+
+function pad(value) {
+  return String(value).padStart(2, '0');
+}
+
+/** 書き出すファイルの名前。日付は端末の時刻で付ける。 */
+export function backupFileName(now = new Date()) {
+  return `shunkan-eisakubun-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.json`;
+}
+
+/** 学習記録を、書き出すファイルの中身にする。 */
+export function createBackup(progress, now = new Date()) {
+  return `${JSON.stringify({ app: APP_ID, format: FORMAT_VERSION, exportedAt: now.toISOString(), progress }, null, 2)}\n`;
+}
+
+function isPlainObject(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function count(value) {
+  return Number.isInteger(value) && value >= 0 ? value : 0;
+}
+
+function readStats(source) {
+  if (!isPlainObject(source)) return {};
+  const stats = {};
+  for (const [id, stat] of Object.entries(source)) {
+    if (!isPlainObject(stat)) continue;
+    const entry = {
+      attempts: count(stat.attempts),
+      correct: count(stat.correct),
+      close: count(stat.close),
+      wrong: count(stat.wrong),
+    };
+    if (entry.attempts === 0) continue;
+    if (RESULTS.includes(stat.last)) entry.last = stat.last;
+    if (Number.isFinite(stat.lastAt)) entry.lastAt = stat.lastAt;
+    stats[id] = entry;
+  }
+  return stats;
+}
+
+function readCustomAnswers(source) {
+  if (!isPlainObject(source)) return {};
+  const customAnswers = {};
+  for (const [id, answers] of Object.entries(source)) {
+    if (!Array.isArray(answers)) continue;
+    const texts = answers
+      .filter((text) => typeof text === 'string')
+      .map((text) => text.trim())
+      .filter((text) => text && text.length <= MAX_ANSWER_LENGTH);
+    const unique = [...new Set(texts)].slice(0, MAX_CUSTOM_ANSWERS);
+    if (unique.length > 0) customAnswers[id] = unique;
+  }
+  return customAnswers;
+}
+
+function readSettings(source, defaults) {
+  const limit = source?.timeLimitSec;
+  const valid = Number.isInteger(limit) && limit >= 0 && limit <= MAX_TIME_LIMIT_SEC;
+  return { ...defaults, timeLimitSec: valid ? limit : defaults.timeLimitSec };
+}
+
+function readDate(value) {
+  const date = typeof value === 'string' ? new Date(value) : null;
+  return date && !Number.isNaN(date.getTime()) ? date : null;
+}
+
+/**
+ * 書き出したファイルを読み、学習記録として使える形にする。
+ * @returns {{progress: object, exportedAt: Date|null}}
+ * @throws {BackupError} 読み込めないファイルのとき。message は画面にそのまま出せる。
+ */
+export function readBackup(text) {
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new BackupError('このファイルは読み込めません。アプリで書き出したファイルを選んでください。');
+  }
+  if (!isPlainObject(data) || data.app !== APP_ID || !isPlainObject(data.progress)) {
+    throw new BackupError('瞬間英作文の記録のファイルではありません。アプリで書き出したファイルを選んでください。');
+  }
+  if (!Number.isInteger(data.format) || data.format > FORMAT_VERSION) {
+    throw new BackupError('新しい版のアプリで書き出したファイルです。アプリを再読み込みしてから、もう一度読み込んでください。');
+  }
+
+  const defaults = emptyProgress();
+  const source = data.progress;
+  return {
+    progress: {
+      ...defaults,
+      settings: readSettings(source.settings, defaults.settings),
+      speechNoticeSeen: source.speechNoticeSeen === true,
+      stats: readStats(source.stats),
+      customAnswers: readCustomAnswers(source.customAnswers),
+      lastBackupAt: readDate(source.lastBackupAt)?.toISOString() ?? null,
+    },
+    exportedAt: readDate(data.exportedAt),
+  };
+}
+
+/** 読み込む前に見せる、記録の中身の要約。 */
+export function summarizeProgress(progress, knownIds = null) {
+  const entries = Object.entries(progress.stats).filter(([id]) => !knownIds || knownIds.has(id));
+  return {
+    attempts: entries.reduce((sum, [, stat]) => sum + stat.attempts, 0),
+    questions: entries.length,
+    customAnswers: Object.values(progress.customAnswers).reduce((sum, answers) => sum + answers.length, 0),
+  };
+}

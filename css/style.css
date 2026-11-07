@@ -97,7 +97,10 @@ input:focus-visible {
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0 auto;
-  padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+  padding-top: calc(24px + env(safe-area-inset-top, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
 }
 
 .primary,
@@ -171,6 +174,166 @@ input:focus-visible {
   color: var(--muted);
   font-size: 0.75rem;
   text-align: center;
+}
+
+.link-button {
+  min-height: 32px;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ホーム画面への追加の案内 */
+.tip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 0.92rem;
+}
+
+.tip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 -12px -8px;
+}
+
+/* 記録の保存 */
+.backup {
+  gap: 28px;
+}
+
+.sub-head {
+  margin: -12px -12px -16px;
+}
+
+.backup-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.backup-intro h1 {
+  font-size: 1.4rem;
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line);
+}
+
+.status > div {
+  display: grid;
+  grid-template-columns: 7.5em minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.status dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.status dd {
+  overflow-wrap: anywhere;
+}
+
+.backup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.backup-section h2 {
+  font-size: 1.05rem;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 1.4em;
+}
+
+.file-button {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  cursor: pointer;
+}
+
+#backup-file:focus-visible + .paste,
+.file-button:focus-within {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+
+.paste {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.paste summary {
+  min-height: 44px;
+  padding: 10px 0;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.paste[open] {
+  gap: 8px;
+}
+
+.paste label {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.paste textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.85rem;
+  color: inherit;
+}
+
+.paste button {
+  margin-top: 8px;
 }
 
 /* ホーム */

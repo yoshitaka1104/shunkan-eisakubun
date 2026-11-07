@@ -55,6 +55,19 @@ npm start
 - 直近の結果が正解でない問題を「苦手な問題」として扱います。次に初回で正解すると外れます。
 - 記録はブラウザの localStorage に保存します。ブラウザや端末をまたいでは共有されません。サイトデータを消すと記録も消えます。
 
+## 記録の保存
+
+ホーム画面の下にある「記録の保存」から、学習記録を書き出したり読み込んだりできます。
+
+- **書き出す:** 記録を1つの JSON ファイルにします。iPhone では共有の画面から「"ファイル"に保存」を選びます。PC ではダウンロードします。テキストとしてコピーもできます。
+- **読み込む:** 書き出したファイルを選ぶか、テキストを貼り付けます。置き換える前に、回答数などの内容を確認できます。読み込んだ記録は、今の記録と置き換わります。
+- **ファイルの検証:** 読み込むファイルは中身を確かめ、使える値だけを取り出します。処理は [js/backup.js](js/backup.js) にまとめています。
+
+iPhone の Safari は、Safari を使った日数で7日間サイトを操作しないと、保存したデータを消します([WebKit の説明](https://webkit.org/blog/10218/full-third-party-cookie-blocking-and-more/))。ホーム画面に追加したアプリは対象外とされているため、iPhone の Safari ではホーム画面への追加を案内します。
+
+- ホーム画面のアプリは Safari とは別の場所に記録を保存するため、移るときは書き出しと読み込みで引き継ぎます。
+- ホーム画面のアプリとして開いたときは、データを消されにくくするよう `navigator.storage.persist()` で申請します。
+
 ## 問題の追加方法
 
 [data/questions.json](data/questions.json) に次の形式で追加します。
@@ -150,6 +163,8 @@ npm test
 | `js/speech.js` | 音声認識と読み上げの入り口。PC と Android の音声認識 |
 | `js/device-speech.js`、`js/transcribe-worker.js` | iPhone と iPad の録音と、端末の中での文字への変換 |
 | `js/diagnostics.js` | 端末の判別と調査用の記録 |
+| `js/backup.js` | 学習記録の書き出しと読み込み |
+| `manifest.webmanifest`、`icons/` | ホーム画面に追加したときの名前とアイコン |
 | `js/audio-files.js`、`audio/` | 模範解答の音声ファイルとその名前の決まり |
 | `tools/generate-audio.mjs` | 模範解答の音声ファイルを作る道具 |
 | `js/storage.js` | 学習記録の保存 |

@@ -21,6 +21,8 @@ const CONTENT_TYPES = {
   '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.mp3': 'audio/mpeg',
+  '.png': 'image/png',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
 };
 
 /** 音声入力の対象は Chrome なので、入っていれば既定のブラウザより優先して開く。 */
