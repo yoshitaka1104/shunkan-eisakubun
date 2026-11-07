@@ -3,7 +3,7 @@
  * 判定は judge.js、記録は progress.js、音声は speech.js に任せる。
  */
 import { diagnostics, isIOS } from './diagnostics.js';
-import { judge } from './judge.js';
+import { judge } from './judge.js?v=1.5';
 import {
   addCustomAnswer,
   answersFor,
@@ -24,8 +24,9 @@ import {
 } from './speech.js?v=1.4';
 import { loadProgress, saveProgress } from './storage.js';
 
-const APP_VERSION = 'v1.4';
+const APP_VERSION = 'v1.5';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
+const LEVEL_NAMES = { 1: '小学校', 2: '中学校', 3: '高校' };
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
 const TIME_LIMIT_OPTIONS = [0, 5, 10, 15, 20];
 const AFTER_CORRECT_DELAY_MS = 500;
@@ -82,8 +83,12 @@ function showToast(text) {
   }, TOAST_MS);
 }
 
+function knownQuestionIds() {
+  return new Set(questions.map((question) => question.id));
+}
+
 function knownWeakIds() {
-  const known = new Set(questions.map((question) => question.id));
+  const known = knownQuestionIds();
   return weakQuestionIds(progress).filter((id) => known.has(id));
 }
 
@@ -96,9 +101,9 @@ function segmented(action, options, selected, label) {
 }
 
 function renderHome() {
-  const { attempts, rate } = totals(progress);
+  const { attempts, rate } = totals(progress, knownQuestionIds());
   const weakCount = knownWeakIds().length;
-  const levels = LEVEL_OPTIONS.map((value) => ({ value, text: value === 'all' ? 'すべて' : `レベル${value}` }));
+  const levels = LEVEL_OPTIONS.map((value) => ({ value, text: value === 'all' ? 'すべて' : LEVEL_NAMES[value] }));
   const counts = COUNT_OPTIONS.map((value) => ({ value, text: value === 'all' ? '全問' : `${value}問` }));
   const limits = TIME_LIMIT_OPTIONS.map((value) => ({ value, text: value === 0 ? 'なし' : `${value}秒` }));
 

@@ -1,54 +1,3104 @@
 [
-  { "id": "L1-001", "level": 1, "pattern": "現在形", "ja": "私は毎朝コーヒーを飲みます。", "answers": ["I drink coffee every morning.", "I have coffee every morning."] },
-  { "id": "L1-002", "level": 1, "pattern": "be動詞", "ja": "私は学生です。", "answers": ["I am a student."] },
-  { "id": "L1-003", "level": 1, "pattern": "be動詞", "ja": "彼女は私の友達です。", "answers": ["She is my friend.", "She is a friend of mine."] },
-  { "id": "L1-004", "level": 1, "pattern": "be動詞の否定文", "ja": "これは私のかばんではありません。", "answers": ["This is not my bag."] },
-  { "id": "L1-005", "level": 1, "pattern": "be動詞の疑問文", "ja": "あなたは疲れていますか。", "answers": ["Are you tired?"] },
-  { "id": "L1-006", "level": 1, "pattern": "一般動詞", "ja": "私たちは日曜日にテニスをします。", "answers": ["We play tennis on Sunday.", "We play tennis on Sundays."] },
-  { "id": "L1-007", "level": 1, "pattern": "三人称単数", "ja": "彼は毎日英語を勉強します。", "answers": ["He studies English every day."] },
-  { "id": "L1-008", "level": 1, "pattern": "一般動詞の否定文", "ja": "私は猫が好きではありません。", "answers": ["I do not like cats."] },
-  { "id": "L1-009", "level": 1, "pattern": "一般動詞の疑問文", "ja": "あなたは車を持っていますか。", "answers": ["Do you have a car?", "Do you own a car?", "Have you got a car?"] },
-  { "id": "L1-010", "level": 1, "pattern": "三人称単数の疑問文", "ja": "彼女はピアノを弾きますか。", "answers": ["Does she play the piano?", "Does she play piano?"] },
-  { "id": "L1-011", "level": 1, "pattern": "can", "ja": "私は速く泳げます。", "answers": ["I can swim fast.", "I can swim quickly."] },
-  { "id": "L1-012", "level": 1, "pattern": "canの否定文", "ja": "彼は日本語を話せません。", "answers": ["He can not speak Japanese."] },
-  { "id": "L1-013", "level": 1, "pattern": "許可を求める", "ja": "ここで写真を撮ってもいいですか。", "answers": ["Can I take a picture here?", "Can I take pictures here?", "Can I take a photo here?", "May I take a picture here?", "May I take pictures here?", "May I take a photo here?"] },
-  { "id": "L1-014", "level": 1, "pattern": "命令文", "ja": "窓を開けてください。", "answers": ["Please open the window.", "Open the window, please."] },
-  { "id": "L1-015", "level": 1, "pattern": "否定の命令文", "ja": "ここで走らないでください。", "answers": ["Please do not run here.", "Do not run here.", "Do not run here, please."] },
-  { "id": "L1-016", "level": 1, "pattern": "疑問詞", "ja": "あなたはどこに住んでいますか。", "answers": ["Where do you live?"] },
-  { "id": "L1-017", "level": 1, "pattern": "時刻の表現", "ja": "今何時ですか。", "answers": ["What time is it?", "What time is it now?", "Do you have the time?"] },
-  { "id": "L1-018", "level": 1, "pattern": "現在進行形", "ja": "私は今、昼食を食べています。", "answers": ["I am eating lunch now.", "I am having lunch now.", "I am eating lunch right now.", "I am having lunch right now."] },
-  { "id": "L1-019", "level": 1, "pattern": "疑問詞", "ja": "なぜあなたは英語を勉強するのですか。", "answers": ["Why do you study English?"] },
-  { "id": "L1-020", "level": 1, "pattern": "how many", "ja": "あなたには兄弟が何人いますか。", "answers": ["How many brothers and sisters do you have?", "How many brothers do you have?", "How many siblings do you have?"] },
-
-  { "id": "L2-001", "level": 2, "pattern": "過去形", "ja": "私は昨日、友達に会いました。", "answers": ["I met my friend yesterday.", "I met a friend yesterday.", "I saw my friend yesterday.", "I saw a friend yesterday."] },
-  { "id": "L2-002", "level": 2, "pattern": "過去形の否定文", "ja": "彼は昨夜テレビを見ませんでした。", "answers": ["He did not watch TV last night.", "He did not watch television last night."] },
-  { "id": "L2-003", "level": 2, "pattern": "過去進行形", "ja": "電話が鳴ったとき、私は料理をしていました。", "answers": ["I was cooking when the phone rang.", "When the phone rang, I was cooking."] },
-  { "id": "L2-004", "level": 2, "pattern": "未来の表現", "ja": "明日は雨が降るでしょう。", "answers": ["It will rain tomorrow.", "It is going to rain tomorrow.", "It will be rainy tomorrow."] },
-  { "id": "L2-005", "level": 2, "pattern": "be going to", "ja": "私は来週、京都を訪れるつもりです。", "answers": ["I am going to visit Kyoto next week.", "I will visit Kyoto next week.", "I am visiting Kyoto next week."] },
-  { "id": "L2-006", "level": 2, "pattern": "there is", "ja": "机の上に本が1冊あります。", "answers": ["There is a book on the desk.", "There is one book on the desk."] },
-  { "id": "L2-007", "level": 2, "pattern": "不定詞(名詞的用法)", "ja": "私は海外旅行をしたいです。", "answers": ["I want to travel abroad.", "I would like to travel abroad.", "I want to go abroad.", "I would like to go abroad."] },
-  { "id": "L2-008", "level": 2, "pattern": "不定詞(副詞的用法)", "ja": "彼はバスに乗るために早く起きました。", "answers": ["He got up early to catch the bus.", "He woke up early to catch the bus.", "He got up early in order to catch the bus."] },
-  { "id": "L2-009", "level": 2, "pattern": "動名詞", "ja": "私は音楽を聴くことが好きです。", "answers": ["I like listening to music.", "I like to listen to music.", "I enjoy listening to music."] },
-  { "id": "L2-010", "level": 2, "pattern": "比較級", "ja": "この箱はあの箱より重いです。", "answers": ["This box is heavier than that box.", "This box is heavier than that one."] },
-  { "id": "L2-011", "level": 2, "pattern": "最上級", "ja": "富士山は日本で一番高い山です。", "answers": ["Mount Fuji is the highest mountain in Japan.", "Mount Fuji is the tallest mountain in Japan."] },
-  { "id": "L2-012", "level": 2, "pattern": "as ~ as", "ja": "私の父は母と同じくらいの背の高さです。", "answers": ["My father is as tall as my mother."] },
-  { "id": "L2-013", "level": 2, "pattern": "接続詞", "ja": "雨が降っていたので、私たちは家にいました。", "answers": ["We stayed home because it was raining.", "We stayed at home because it was raining.", "Because it was raining, we stayed home.", "Because it was raining, we stayed at home.", "It was raining, so we stayed home.", "It was raining, so we stayed at home."] },
-  { "id": "L2-014", "level": 2, "pattern": "must", "ja": "あなたは今日、宿題を終わらせなければなりません。", "answers": ["You must finish your homework today.", "You have to finish your homework today."] },
-  { "id": "L2-015", "level": 2, "pattern": "依頼の表現", "ja": "窓を閉めていただけますか。", "answers": ["Could you close the window?", "Would you close the window?", "Can you close the window?", "Could you please close the window?", "Would you mind closing the window?"] },
-
-  { "id": "L3-001", "level": 3, "pattern": "現在完了(経験)", "ja": "私は一度も北海道に行ったことがありません。", "answers": ["I have never been to Hokkaido."] },
-  { "id": "L3-002", "level": 3, "pattern": "現在完了(継続)", "ja": "私は10年間この町に住んでいます。", "answers": ["I have lived in this town for ten years.", "I have been living in this town for ten years."] },
-  { "id": "L3-003", "level": 3, "pattern": "現在完了(完了)", "ja": "彼はちょうど宿題を終えたところです。", "answers": ["He has just finished his homework."] },
-  { "id": "L3-004", "level": 3, "pattern": "現在完了の疑問文", "ja": "あなたはもう昼食を食べましたか。", "answers": ["Have you eaten lunch yet?", "Have you had lunch yet?", "Did you eat lunch yet?", "Did you have lunch yet?"] },
-  { "id": "L3-005", "level": 3, "pattern": "受け身", "ja": "この本は多くの人に読まれています。", "answers": ["This book is read by many people."] },
-  { "id": "L3-006", "level": 3, "pattern": "受け身の過去形", "ja": "この寺は500年前に建てられました。", "answers": ["This temple was built 500 years ago."] },
-  { "id": "L3-007", "level": 3, "pattern": "関係代名詞(主格)", "ja": "私には英語を教えている友達がいます。", "answers": ["I have a friend who teaches English."] },
-  { "id": "L3-008", "level": 3, "pattern": "関係代名詞(目的格)", "ja": "これは私が昨日買った本です。", "answers": ["This is the book I bought yesterday.", "This is the book that I bought yesterday.", "This is the book which I bought yesterday."] },
-  { "id": "L3-009", "level": 3, "pattern": "分詞の形容詞的用法", "ja": "ベンチに座っている男性は私の祖父です。", "answers": ["The man sitting on the bench is my grandfather.", "The man who is sitting on the bench is my grandfather."] },
-  { "id": "L3-010", "level": 3, "pattern": "間接疑問文", "ja": "私は彼がどこに住んでいるか知りません。", "answers": ["I do not know where he lives."] },
-  { "id": "L3-011", "level": 3, "pattern": "疑問詞+不定詞", "ja": "私はこの機械の使い方を知りません。", "answers": ["I do not know how to use this machine."] },
-  { "id": "L3-012", "level": 3, "pattern": "It is ~ to", "ja": "毎日運動することは大切です。", "answers": ["It is important to exercise every day.", "It is important to get exercise every day.", "Exercising every day is important."] },
-  { "id": "L3-013", "level": 3, "pattern": "too ~ to", "ja": "私は疲れすぎて歩けません。", "answers": ["I am too tired to walk."] },
-  { "id": "L3-014", "level": 3, "pattern": "tell + 人 + to", "ja": "先生は私たちに静かにするように言いました。", "answers": ["The teacher told us to be quiet.", "Our teacher told us to be quiet."] },
-  { "id": "L3-015", "level": 3, "pattern": "make + 目的語 + 補語", "ja": "その知らせは彼女を幸せにしました。", "answers": ["The news made her happy.", "That news made her happy."] }
+  {
+    "id": "E-001",
+    "level": 1,
+    "pattern": "単文",
+    "ja": "私は犬が好きです。",
+    "answers": [
+      "I like dogs."
+    ]
+  },
+  {
+    "id": "E-002",
+    "level": 1,
+    "pattern": "単文",
+    "ja": "彼女は毎日走ります。",
+    "answers": [
+      "She runs every day."
+    ]
+  },
+  {
+    "id": "E-003",
+    "level": 1,
+    "pattern": "単文",
+    "ja": "私たちは学校へ行きます。",
+    "answers": [
+      "We go to school."
+    ]
+  },
+  {
+    "id": "E-004",
+    "level": 1,
+    "pattern": "平叙文(肯定)",
+    "ja": "私はピアノを弾きます。",
+    "answers": [
+      "I play the piano."
+    ]
+  },
+  {
+    "id": "E-005",
+    "level": 1,
+    "pattern": "平叙文(肯定)",
+    "ja": "彼は先生です。",
+    "answers": [
+      "He is a teacher."
+    ]
+  },
+  {
+    "id": "E-006",
+    "level": 1,
+    "pattern": "平叙文(肯定)",
+    "ja": "私の妹は上手に泳げます。",
+    "answers": [
+      "My sister can swim well.",
+      "My little sister can swim well.",
+      "My younger sister can swim well."
+    ]
+  },
+  {
+    "id": "E-007",
+    "level": 1,
+    "pattern": "平叙文(否定)",
+    "ja": "私は魚が好きではありません。",
+    "answers": [
+      "I do not like fish."
+    ]
+  },
+  {
+    "id": "E-008",
+    "level": 1,
+    "pattern": "平叙文(否定)",
+    "ja": "彼女は医者ではありません。",
+    "answers": [
+      "She is not a doctor."
+    ]
+  },
+  {
+    "id": "E-009",
+    "level": 1,
+    "pattern": "平叙文(否定)",
+    "ja": "私は速く走れません。",
+    "answers": [
+      "I cannot run fast."
+    ]
+  },
+  {
+    "id": "E-010",
+    "level": 1,
+    "pattern": "命令文(肯定)",
+    "ja": "ドアを開けてください。",
+    "answers": [
+      "Please open the door.",
+      "Open the door, please.",
+      "Open the door."
+    ]
+  },
+  {
+    "id": "E-011",
+    "level": 1,
+    "pattern": "命令文(肯定)",
+    "ja": "ここに座ってください。",
+    "answers": [
+      "Please sit here.",
+      "Sit here, please.",
+      "Sit here."
+    ]
+  },
+  {
+    "id": "E-012",
+    "level": 1,
+    "pattern": "命令文(肯定)",
+    "ja": "静かにしてください。",
+    "answers": [
+      "Please be quiet.",
+      "Be quiet, please.",
+      "Be quiet."
+    ]
+  },
+  {
+    "id": "E-013",
+    "level": 1,
+    "pattern": "命令文(否定)",
+    "ja": "ここで食べてはいけません。",
+    "answers": [
+      "Do not eat here."
+    ]
+  },
+  {
+    "id": "E-014",
+    "level": 1,
+    "pattern": "命令文(否定)",
+    "ja": "窓を開けないでください。",
+    "answers": [
+      "Please do not open the window.",
+      "Do not open the window."
+    ]
+  },
+  {
+    "id": "E-015",
+    "level": 1,
+    "pattern": "命令文(否定)",
+    "ja": "遅れないでください。",
+    "answers": [
+      "Please do not be late.",
+      "Do not be late."
+    ]
+  },
+  {
+    "id": "E-016",
+    "level": 1,
+    "pattern": "疑問文(be動詞で始まる)",
+    "ja": "あなたは空腹ですか。",
+    "answers": [
+      "Are you hungry?"
+    ]
+  },
+  {
+    "id": "E-017",
+    "level": 1,
+    "pattern": "疑問文(be動詞で始まる)",
+    "ja": "彼は学生ですか。",
+    "answers": [
+      "Is he a student?"
+    ]
+  },
+  {
+    "id": "E-018",
+    "level": 1,
+    "pattern": "疑問文(be動詞で始まる)",
+    "ja": "これはあなたの本ですか。",
+    "answers": [
+      "Is this your book?"
+    ]
+  },
+  {
+    "id": "E-019",
+    "level": 1,
+    "pattern": "疑問文(助動詞で始まる)",
+    "ja": "あなたは泳げますか。",
+    "answers": [
+      "Can you swim?"
+    ]
+  },
+  {
+    "id": "E-020",
+    "level": 1,
+    "pattern": "疑問文(助動詞で始まる)",
+    "ja": "あなたは音楽が好きですか。",
+    "answers": [
+      "Do you like music?"
+    ]
+  },
+  {
+    "id": "E-021",
+    "level": 1,
+    "pattern": "疑問文(助動詞で始まる)",
+    "ja": "あなたは毎朝朝食を食べますか。",
+    "answers": [
+      "Do you eat breakfast every morning?",
+      "Do you have breakfast every morning?"
+    ]
+  },
+  {
+    "id": "E-022",
+    "level": 1,
+    "pattern": "疑問文(疑問詞で始まる)",
+    "ja": "あなたの名前は何ですか。",
+    "answers": [
+      "What is your name?"
+    ]
+  },
+  {
+    "id": "E-023",
+    "level": 1,
+    "pattern": "疑問文(疑問詞で始まる)",
+    "ja": "あなたはどこに住んでいますか。",
+    "answers": [
+      "Where do you live?"
+    ]
+  },
+  {
+    "id": "E-024",
+    "level": 1,
+    "pattern": "疑問文(疑問詞で始まる)",
+    "ja": "あの男の人はだれですか。",
+    "answers": [
+      "Who is that man?"
+    ]
+  },
+  {
+    "id": "E-025",
+    "level": 1,
+    "pattern": "代名詞を含む文",
+    "ja": "彼女は私の友達です。",
+    "answers": [
+      "She is my friend."
+    ]
+  },
+  {
+    "id": "E-026",
+    "level": 1,
+    "pattern": "代名詞を含む文",
+    "ja": "彼は毎日サッカーをします。",
+    "answers": [
+      "He plays soccer every day."
+    ]
+  },
+  {
+    "id": "E-027",
+    "level": 1,
+    "pattern": "代名詞を含む文",
+    "ja": "あなたは親切です。",
+    "answers": [
+      "You are kind."
+    ]
+  },
+  {
+    "id": "E-028",
+    "level": 1,
+    "pattern": "動名詞を含む文",
+    "ja": "私は泳ぐことが好きです。",
+    "answers": [
+      "I like swimming.",
+      "I like to swim."
+    ]
+  },
+  {
+    "id": "E-029",
+    "level": 1,
+    "pattern": "動名詞を含む文",
+    "ja": "私は歌うことが得意です。",
+    "answers": [
+      "I am good at singing."
+    ]
+  },
+  {
+    "id": "E-030",
+    "level": 1,
+    "pattern": "動名詞を含む文",
+    "ja": "私たちは料理を楽しみました。",
+    "answers": [
+      "We enjoyed cooking."
+    ]
+  },
+  {
+    "id": "E-031",
+    "level": 1,
+    "pattern": "過去形を含む文",
+    "ja": "私は東京へ行きました。",
+    "answers": [
+      "I went to Tokyo."
+    ]
+  },
+  {
+    "id": "E-032",
+    "level": 1,
+    "pattern": "過去形を含む文",
+    "ja": "私は昨日テニスをしました。",
+    "answers": [
+      "I played tennis yesterday."
+    ]
+  },
+  {
+    "id": "E-033",
+    "level": 1,
+    "pattern": "過去形を含む文",
+    "ja": "それは楽しかったです。",
+    "answers": [
+      "It was fun."
+    ]
+  },
+  {
+    "id": "E-034",
+    "level": 1,
+    "pattern": "主語+動詞",
+    "ja": "鳥は飛びます。",
+    "answers": [
+      "Birds fly."
+    ]
+  },
+  {
+    "id": "E-035",
+    "level": 1,
+    "pattern": "主語+動詞",
+    "ja": "私は毎朝6時に起きます。",
+    "answers": [
+      "I get up at six every morning.",
+      "I wake up at six every morning."
+    ]
+  },
+  {
+    "id": "E-036",
+    "level": 1,
+    "pattern": "主語+動詞",
+    "ja": "彼はバスで学校へ行きます。",
+    "answers": [
+      "He goes to school by bus."
+    ]
+  },
+  {
+    "id": "E-037",
+    "level": 1,
+    "pattern": "主語+be動詞+名詞",
+    "ja": "私の父は料理人です。",
+    "answers": [
+      "My father is a cook.",
+      "My father is a chef."
+    ]
+  },
+  {
+    "id": "E-038",
+    "level": 1,
+    "pattern": "主語+be動詞+名詞",
+    "ja": "これは私の自転車です。",
+    "answers": [
+      "This is my bike.",
+      "This is my bicycle."
+    ]
+  },
+  {
+    "id": "E-039",
+    "level": 1,
+    "pattern": "主語+be動詞+名詞",
+    "ja": "東京は大きな都市です。",
+    "answers": [
+      "Tokyo is a big city."
+    ]
+  },
+  {
+    "id": "E-040",
+    "level": 1,
+    "pattern": "主語+be動詞+代名詞",
+    "ja": "これは私です。",
+    "answers": [
+      "This is me."
+    ]
+  },
+  {
+    "id": "E-041",
+    "level": 1,
+    "pattern": "主語+be動詞+代名詞",
+    "ja": "あれは彼女です。",
+    "answers": [
+      "That is her."
+    ]
+  },
+  {
+    "id": "E-042",
+    "level": 1,
+    "pattern": "主語+be動詞+代名詞",
+    "ja": "あの赤いかばんは私のものです。",
+    "answers": [
+      "That red bag is mine."
+    ]
+  },
+  {
+    "id": "E-043",
+    "level": 1,
+    "pattern": "主語+be動詞+形容詞",
+    "ja": "私は元気です。",
+    "answers": [
+      "I am fine."
+    ]
+  },
+  {
+    "id": "E-044",
+    "level": 1,
+    "pattern": "主語+be動詞+形容詞",
+    "ja": "この花は美しいです。",
+    "answers": [
+      "This flower is beautiful."
+    ]
+  },
+  {
+    "id": "E-045",
+    "level": 1,
+    "pattern": "主語+be動詞+形容詞",
+    "ja": "今日は暑いです。",
+    "answers": [
+      "It is hot today.",
+      "Today is hot."
+    ]
+  },
+  {
+    "id": "E-046",
+    "level": 1,
+    "pattern": "主語+動詞+名詞",
+    "ja": "私はりんごが好きです。",
+    "answers": [
+      "I like apples."
+    ]
+  },
+  {
+    "id": "E-047",
+    "level": 1,
+    "pattern": "主語+動詞+名詞",
+    "ja": "彼は毎週土曜日に自分の部屋を掃除します。",
+    "answers": [
+      "He cleans his room every Saturday."
+    ]
+  },
+  {
+    "id": "E-048",
+    "level": 1,
+    "pattern": "主語+動詞+名詞",
+    "ja": "私の母は毎日ニュースを見ます。",
+    "answers": [
+      "My mother watches the news every day."
+    ]
+  },
+  {
+    "id": "E-049",
+    "level": 1,
+    "pattern": "主語+動詞+代名詞",
+    "ja": "私は彼を知っています。",
+    "answers": [
+      "I know him."
+    ]
+  },
+  {
+    "id": "E-050",
+    "level": 1,
+    "pattern": "主語+動詞+代名詞",
+    "ja": "彼女は彼らが大好きです。",
+    "answers": [
+      "She loves them.",
+      "She likes them very much."
+    ]
+  },
+  {
+    "id": "E-051",
+    "level": 1,
+    "pattern": "主語+動詞+代名詞",
+    "ja": "私はそれを毎日使います。",
+    "answers": [
+      "I use it every day."
+    ]
+  },
+  {
+    "id": "J-001",
+    "level": 2,
+    "pattern": "重文",
+    "ja": "私はロンドンへ行き、彼はパリへ行きました。",
+    "answers": [
+      "I went to London, and he went to Paris."
+    ]
+  },
+  {
+    "id": "J-002",
+    "level": 2,
+    "pattern": "重文",
+    "ja": "私は犬が好きですが、妹は猫が好きです。",
+    "answers": [
+      "I like dogs, but my sister likes cats."
+    ]
+  },
+  {
+    "id": "J-003",
+    "level": 2,
+    "pattern": "重文",
+    "ja": "急ぎなさい、さもないと遅れますよ。",
+    "answers": [
+      "Hurry up, or you will be late.",
+      "Hurry, or you will be late."
+    ]
+  },
+  {
+    "id": "J-004",
+    "level": 2,
+    "pattern": "複文",
+    "ja": "疲れていたので、私は早く寝ました。",
+    "answers": [
+      "I went to bed early because I was tired.",
+      "Because I was tired, I went to bed early."
+    ]
+  },
+  {
+    "id": "J-005",
+    "level": 2,
+    "pattern": "複文",
+    "ja": "私が帰宅したとき、母は料理をしていました。",
+    "answers": [
+      "When I got home, my mother was cooking.",
+      "My mother was cooking when I got home.",
+      "When I came home, my mother was cooking.",
+      "My mother was cooking when I came home."
+    ]
+  },
+  {
+    "id": "J-006",
+    "level": 2,
+    "pattern": "複文",
+    "ja": "彼は親切だと私は思います。",
+    "answers": [
+      "I think that he is kind.",
+      "I think he is kind."
+    ]
+  },
+  {
+    "id": "J-007",
+    "level": 2,
+    "pattern": "疑問文(may、willで始まる)",
+    "ja": "窓を開けてもいいですか。",
+    "answers": [
+      "May I open the window?"
+    ]
+  },
+  {
+    "id": "J-008",
+    "level": 2,
+    "pattern": "疑問文(may、willで始まる)",
+    "ja": "私を手伝ってくれませんか。",
+    "answers": [
+      "Will you help me?"
+    ]
+  },
+  {
+    "id": "J-009",
+    "level": 2,
+    "pattern": "疑問文(may、willで始まる)",
+    "ja": "明日は雨が降るでしょうか。",
+    "answers": [
+      "Will it rain tomorrow?"
+    ]
+  },
+  {
+    "id": "J-010",
+    "level": 2,
+    "pattern": "疑問文(orを含む)",
+    "ja": "あなたは犬が好きですか、それとも猫が好きですか。",
+    "answers": [
+      "Do you like dogs or cats?"
+    ]
+  },
+  {
+    "id": "J-011",
+    "level": 2,
+    "pattern": "疑問文(orを含む)",
+    "ja": "これはあなたの傘ですか、それとも彼の傘ですか。",
+    "answers": [
+      "Is this your umbrella or his?"
+    ]
+  },
+  {
+    "id": "J-012",
+    "level": 2,
+    "pattern": "疑問文(orを含む)",
+    "ja": "彼は電車で来ましたか、それともバスで来ましたか。",
+    "answers": [
+      "Did he come by train or by bus?",
+      "Did he come by train or bus?"
+    ]
+  },
+  {
+    "id": "J-013",
+    "level": 2,
+    "pattern": "疑問文(which、whoseで始まる)",
+    "ja": "どちらがあなたのかばんですか。",
+    "answers": [
+      "Which is your bag?"
+    ]
+  },
+  {
+    "id": "J-014",
+    "level": 2,
+    "pattern": "疑問文(which、whoseで始まる)",
+    "ja": "これはだれのノートですか。",
+    "answers": [
+      "Whose notebook is this?"
+    ]
+  },
+  {
+    "id": "J-015",
+    "level": 2,
+    "pattern": "疑問文(which、whoseで始まる)",
+    "ja": "どの電車が東京へ行きますか。",
+    "answers": [
+      "Which train goes to Tokyo?"
+    ]
+  },
+  {
+    "id": "J-016",
+    "level": 2,
+    "pattern": "感嘆文",
+    "ja": "なんて美しいのでしょう。",
+    "answers": [
+      "How beautiful!"
+    ]
+  },
+  {
+    "id": "J-017",
+    "level": 2,
+    "pattern": "感嘆文",
+    "ja": "なんて大きな犬でしょう。",
+    "answers": [
+      "What a big dog!"
+    ]
+  },
+  {
+    "id": "J-018",
+    "level": 2,
+    "pattern": "感嘆文",
+    "ja": "なんておもしろい本でしょう。",
+    "answers": [
+      "What an interesting book!"
+    ]
+  },
+  {
+    "id": "J-019",
+    "level": 2,
+    "pattern": "主語+be動詞以外の動詞+名詞",
+    "ja": "彼女は歌手になりました。",
+    "answers": [
+      "She became a singer."
+    ]
+  },
+  {
+    "id": "J-020",
+    "level": 2,
+    "pattern": "主語+be動詞以外の動詞+名詞",
+    "ja": "彼は有名な医者になりました。",
+    "answers": [
+      "He became a famous doctor."
+    ]
+  },
+  {
+    "id": "J-021",
+    "level": 2,
+    "pattern": "主語+be動詞以外の動詞+名詞",
+    "ja": "私の兄は警察官になりました。",
+    "answers": [
+      "My brother became a police officer.",
+      "My older brother became a police officer."
+    ]
+  },
+  {
+    "id": "J-022",
+    "level": 2,
+    "pattern": "主語+be動詞以外の動詞+形容詞",
+    "ja": "あなたは疲れているように見えます。",
+    "answers": [
+      "You look tired."
+    ]
+  },
+  {
+    "id": "J-023",
+    "level": 2,
+    "pattern": "主語+be動詞以外の動詞+形容詞",
+    "ja": "このスープはおいしい味がします。",
+    "answers": [
+      "This soup tastes good.",
+      "This soup tastes delicious."
+    ]
+  },
+  {
+    "id": "J-024",
+    "level": 2,
+    "pattern": "主語+be動詞以外の動詞+形容詞",
+    "ja": "空が暗くなりました。",
+    "answers": [
+      "The sky became dark.",
+      "The sky got dark.",
+      "The sky turned dark."
+    ]
+  },
+  {
+    "id": "J-025",
+    "level": 2,
+    "pattern": "主語+動詞+動名詞",
+    "ja": "私は本を読むことを楽しみました。",
+    "answers": [
+      "I enjoyed reading books.",
+      "I enjoyed reading a book."
+    ]
+  },
+  {
+    "id": "J-026",
+    "level": 2,
+    "pattern": "主語+動詞+動名詞",
+    "ja": "彼は去年、たばこを吸うのをやめました。",
+    "answers": [
+      "He stopped smoking last year.",
+      "He quit smoking last year."
+    ]
+  },
+  {
+    "id": "J-027",
+    "level": 2,
+    "pattern": "主語+動詞+動名詞",
+    "ja": "雨が降り始めました。",
+    "answers": [
+      "It started raining.",
+      "It began raining.",
+      "It started to rain.",
+      "It began to rain."
+    ]
+  },
+  {
+    "id": "J-028",
+    "level": 2,
+    "pattern": "主語+動詞+to不定詞",
+    "ja": "私は医者になりたいです。",
+    "answers": [
+      "I want to be a doctor.",
+      "I want to become a doctor."
+    ]
+  },
+  {
+    "id": "J-029",
+    "level": 2,
+    "pattern": "主語+動詞+to不定詞",
+    "ja": "彼は英語を勉強し始めました。",
+    "answers": [
+      "He started to study English.",
+      "He began to study English.",
+      "He started studying English.",
+      "He began studying English."
+    ]
+  },
+  {
+    "id": "J-030",
+    "level": 2,
+    "pattern": "主語+動詞+to不定詞",
+    "ja": "私たちは海外へ行きたいと望んでいます。",
+    "answers": [
+      "We hope to go abroad."
+    ]
+  },
+  {
+    "id": "J-031",
+    "level": 2,
+    "pattern": "主語+動詞+how(など)to不定詞",
+    "ja": "私はこの機械の使い方を知っています。",
+    "answers": [
+      "I know how to use this machine."
+    ]
+  },
+  {
+    "id": "J-032",
+    "level": 2,
+    "pattern": "主語+動詞+how(など)to不定詞",
+    "ja": "私はどこへ行けばよいか分かりません。",
+    "answers": [
+      "I do not know where to go."
+    ]
+  },
+  {
+    "id": "J-033",
+    "level": 2,
+    "pattern": "主語+動詞+how(など)to不定詞",
+    "ja": "彼女は次に何をすべきか分かっていました。",
+    "answers": [
+      "She knew what to do next."
+    ]
+  },
+  {
+    "id": "J-034",
+    "level": 2,
+    "pattern": "主語+動詞+that節",
+    "ja": "私は彼が正しいと思います。",
+    "answers": [
+      "I think that he is right.",
+      "I think he is right."
+    ]
+  },
+  {
+    "id": "J-035",
+    "level": 2,
+    "pattern": "主語+動詞+that節",
+    "ja": "彼女はその知らせが本当だと知っていました。",
+    "answers": [
+      "She knew that the news was true.",
+      "She knew the news was true."
+    ]
+  },
+  {
+    "id": "J-036",
+    "level": 2,
+    "pattern": "主語+動詞+that節",
+    "ja": "私は明日晴れることを願っています。",
+    "answers": [
+      "I hope that it will be sunny tomorrow.",
+      "I hope it will be sunny tomorrow.",
+      "I hope it will be fine tomorrow."
+    ]
+  },
+  {
+    "id": "J-037",
+    "level": 2,
+    "pattern": "主語+動詞+what(など)節",
+    "ja": "私は彼が何を欲しいのか知りません。",
+    "answers": [
+      "I do not know what he wants."
+    ]
+  },
+  {
+    "id": "J-038",
+    "level": 2,
+    "pattern": "主語+動詞+what(など)節",
+    "ja": "私は彼女がどこに住んでいるか知っています。",
+    "answers": [
+      "I know where she lives."
+    ]
+  },
+  {
+    "id": "J-039",
+    "level": 2,
+    "pattern": "主語+動詞+what(など)節",
+    "ja": "私は彼がなぜ怒っているのか分かりません。",
+    "answers": [
+      "I do not know why he is angry.",
+      "I do not understand why he is angry."
+    ]
+  },
+  {
+    "id": "J-040",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+名詞",
+    "ja": "父は私に時計をくれました。",
+    "answers": [
+      "My father gave me a watch."
+    ]
+  },
+  {
+    "id": "J-041",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+名詞",
+    "ja": "彼女は私たちに英語を教えています。",
+    "answers": [
+      "She teaches us English."
+    ]
+  },
+  {
+    "id": "J-042",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+名詞",
+    "ja": "私は母に手紙を送りました。",
+    "answers": [
+      "I sent my mother a letter.",
+      "I sent a letter to my mother."
+    ]
+  },
+  {
+    "id": "J-043",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+代名詞",
+    "ja": "私は彼女にそのことを教えました。",
+    "answers": [
+      "I told her that."
+    ]
+  },
+  {
+    "id": "J-044",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+代名詞",
+    "ja": "私にもう一つください。",
+    "answers": [
+      "Please give me another one.",
+      "Please give me another.",
+      "Give me another one, please."
+    ]
+  },
+  {
+    "id": "J-045",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+代名詞",
+    "ja": "彼にいくつか見せてください。",
+    "answers": [
+      "Please show him some.",
+      "Show him some, please."
+    ]
+  },
+  {
+    "id": "J-046",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+how(など)to不定詞",
+    "ja": "彼は私に泳ぎ方を教えてくれました。",
+    "answers": [
+      "He taught me how to swim."
+    ]
+  },
+  {
+    "id": "J-047",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+how(など)to不定詞",
+    "ja": "彼女は私に駅への行き方を教えてくれました。",
+    "answers": [
+      "She told me how to get to the station.",
+      "She showed me how to get to the station.",
+      "She told me the way to the station."
+    ]
+  },
+  {
+    "id": "J-048",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+how(など)to不定詞",
+    "ja": "母は私に次に何をすべきか教えてくれました。",
+    "answers": [
+      "My mother told me what to do next."
+    ]
+  },
+  {
+    "id": "J-049",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+that節",
+    "ja": "彼は私に、行くつもりだと言いました。",
+    "answers": [
+      "He told me that he would go.",
+      "He told me he would go."
+    ]
+  },
+  {
+    "id": "J-050",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+that節",
+    "ja": "先生は私たちに、その試験は簡単だと言いました。",
+    "answers": [
+      "The teacher told us that the test was easy.",
+      "The teacher told us the test was easy.",
+      "Our teacher told us that the test was easy.",
+      "Our teacher told us the test was easy."
+    ]
+  },
+  {
+    "id": "J-051",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+that節",
+    "ja": "彼女は私に、それが本当だと示しました。",
+    "answers": [
+      "She showed me that it was true.",
+      "She showed me it was true."
+    ]
+  },
+  {
+    "id": "J-052",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+what(など)節",
+    "ja": "どこに住んでいるのか私に教えてください。",
+    "answers": [
+      "Please tell me where you live.",
+      "Tell me where you live, please."
+    ]
+  },
+  {
+    "id": "J-053",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+what(など)節",
+    "ja": "彼は私に、何を買ったのか見せてくれました。",
+    "answers": [
+      "He showed me what he bought.",
+      "He showed me what he had bought."
+    ]
+  },
+  {
+    "id": "J-054",
+    "level": 2,
+    "pattern": "主語+動詞+間接目的語+what(など)節",
+    "ja": "私は彼に、なぜ遅れたのかを尋ねました。",
+    "answers": [
+      "I asked him why he was late."
+    ]
+  },
+  {
+    "id": "J-055",
+    "level": 2,
+    "pattern": "主語+動詞+目的語+名詞",
+    "ja": "私たちは彼をケンと呼びます。",
+    "answers": [
+      "We call him Ken."
+    ]
+  },
+  {
+    "id": "J-056",
+    "level": 2,
+    "pattern": "主語+動詞+目的語+名詞",
+    "ja": "彼らはその犬をマックスと名付けました。",
+    "answers": [
+      "They named the dog Max."
+    ]
+  },
+  {
+    "id": "J-057",
+    "level": 2,
+    "pattern": "主語+動詞+目的語+名詞",
+    "ja": "その映画は彼女をスターにしました。",
+    "answers": [
+      "The movie made her a star.",
+      "That movie made her a star."
+    ]
+  },
+  {
+    "id": "J-058",
+    "level": 2,
+    "pattern": "主語+動詞+目的語+形容詞",
+    "ja": "その知らせは私を悲しくさせました。",
+    "answers": [
+      "The news made me sad."
+    ]
+  },
+  {
+    "id": "J-059",
+    "level": 2,
+    "pattern": "主語+動詞+目的語+形容詞",
+    "ja": "部屋をきれいにしておきなさい。",
+    "answers": [
+      "Keep your room clean.",
+      "Keep the room clean.",
+      "Please keep your room clean."
+    ]
+  },
+  {
+    "id": "J-060",
+    "level": 2,
+    "pattern": "主語+動詞+目的語+形容詞",
+    "ja": "彼は壁を白く塗りました。",
+    "answers": [
+      "He painted the wall white."
+    ]
+  },
+  {
+    "id": "J-061",
+    "level": 2,
+    "pattern": "主語+動詞+目的語+原形不定詞",
+    "ja": "私に手伝わせてください。",
+    "answers": [
+      "Let me help you.",
+      "Please let me help you."
+    ]
+  },
+  {
+    "id": "J-062",
+    "level": 2,
+    "pattern": "主語+動詞+目的語+原形不定詞",
+    "ja": "私は母が料理をするのを手伝いました。",
+    "answers": [
+      "I helped my mother cook."
+    ]
+  },
+  {
+    "id": "J-063",
+    "level": 2,
+    "pattern": "主語+動詞+目的語+原形不定詞",
+    "ja": "父は私に車を洗わせました。",
+    "answers": [
+      "My father made me wash the car.",
+      "My father had me wash the car."
+    ]
+  },
+  {
+    "id": "J-064",
+    "level": 2,
+    "pattern": "There+be動詞",
+    "ja": "机の上にペンがあります。",
+    "answers": [
+      "There is a pen on the desk."
+    ]
+  },
+  {
+    "id": "J-065",
+    "level": 2,
+    "pattern": "There+be動詞",
+    "ja": "公園にたくさんの子どもがいました。",
+    "answers": [
+      "There were a lot of children in the park.",
+      "There were many children in the park."
+    ]
+  },
+  {
+    "id": "J-066",
+    "level": 2,
+    "pattern": "There+be動詞",
+    "ja": "この町には図書館が2つあります。",
+    "answers": [
+      "There are two libraries in this town."
+    ]
+  },
+  {
+    "id": "J-067",
+    "level": 2,
+    "pattern": "It+be動詞+(for)+to不定詞",
+    "ja": "英語を話すことは楽しいです。",
+    "answers": [
+      "It is fun to speak English."
+    ]
+  },
+  {
+    "id": "J-068",
+    "level": 2,
+    "pattern": "It+be動詞+(for)+to不定詞",
+    "ja": "私にとって早く起きることは難しいです。",
+    "answers": [
+      "It is hard for me to get up early.",
+      "It is difficult for me to get up early."
+    ]
+  },
+  {
+    "id": "J-069",
+    "level": 2,
+    "pattern": "It+be動詞+(for)+to不定詞",
+    "ja": "毎日運動することは大切です。",
+    "answers": [
+      "It is important to exercise every day."
+    ]
+  },
+  {
+    "id": "J-070",
+    "level": 2,
+    "pattern": "主語+tell、wantなど+目的語+to不定詞",
+    "ja": "私は彼に来てほしいです。",
+    "answers": [
+      "I want him to come."
+    ]
+  },
+  {
+    "id": "J-071",
+    "level": 2,
+    "pattern": "主語+tell、wantなど+目的語+to不定詞",
+    "ja": "母は私に部屋を掃除するように言いました。",
+    "answers": [
+      "My mother told me to clean my room.",
+      "My mother told me to clean the room."
+    ]
+  },
+  {
+    "id": "J-072",
+    "level": 2,
+    "pattern": "主語+tell、wantなど+目的語+to不定詞",
+    "ja": "先生は私たちに静かにするように頼みました。",
+    "answers": [
+      "The teacher asked us to be quiet.",
+      "Our teacher asked us to be quiet."
+    ]
+  },
+  {
+    "id": "J-073",
+    "level": 2,
+    "pattern": "主語+be動詞+形容詞+that節",
+    "ja": "あなたが来てくれてうれしいです。",
+    "answers": [
+      "I am glad that you came.",
+      "I am glad you came.",
+      "I am happy that you came.",
+      "I am happy you came."
+    ]
+  },
+  {
+    "id": "J-074",
+    "level": 2,
+    "pattern": "主語+be動詞+形容詞+that節",
+    "ja": "彼はきっと試験に合格すると思います。",
+    "answers": [
+      "I am sure that he will pass the exam.",
+      "I am sure he will pass the exam.",
+      "I am sure that he will pass the test.",
+      "I am sure he will pass the test."
+    ]
+  },
+  {
+    "id": "J-075",
+    "level": 2,
+    "pattern": "主語+be動詞+形容詞+that節",
+    "ja": "遅れてしまってすみません。",
+    "answers": [
+      "I am sorry that I am late.",
+      "I am sorry I am late.",
+      "I am sorry to be late.",
+      "I am sorry for being late."
+    ]
+  },
+  {
+    "id": "J-076",
+    "level": 2,
+    "pattern": "代名詞(人称)",
+    "ja": "この本は彼のものです。",
+    "answers": [
+      "This book is his."
+    ]
+  },
+  {
+    "id": "J-077",
+    "level": 2,
+    "pattern": "代名詞(人称)",
+    "ja": "私は彼らを手伝いました。",
+    "answers": [
+      "I helped them."
+    ]
+  },
+  {
+    "id": "J-078",
+    "level": 2,
+    "pattern": "代名詞(人称)",
+    "ja": "あの自転車は彼女のものです。",
+    "answers": [
+      "That bike is hers.",
+      "That bicycle is hers."
+    ]
+  },
+  {
+    "id": "J-079",
+    "level": 2,
+    "pattern": "代名詞(指示)",
+    "ja": "これらは私の写真です。",
+    "answers": [
+      "These are my pictures.",
+      "These are my photos."
+    ]
+  },
+  {
+    "id": "J-080",
+    "level": 2,
+    "pattern": "代名詞(指示)",
+    "ja": "あれらは古い建物です。",
+    "answers": [
+      "Those are old buildings."
+    ]
+  },
+  {
+    "id": "J-081",
+    "level": 2,
+    "pattern": "代名詞(指示)",
+    "ja": "これらのりんごはとても甘いです。",
+    "answers": [
+      "These apples are very sweet."
+    ]
+  },
+  {
+    "id": "J-082",
+    "level": 2,
+    "pattern": "代名詞(疑問)",
+    "ja": "どれがあなたの傘ですか。",
+    "answers": [
+      "Which is your umbrella?"
+    ]
+  },
+  {
+    "id": "J-083",
+    "level": 2,
+    "pattern": "代名詞(疑問)",
+    "ja": "あなたはどれが欲しいですか。",
+    "answers": [
+      "Which do you want?"
+    ]
+  },
+  {
+    "id": "J-084",
+    "level": 2,
+    "pattern": "代名詞(疑問)",
+    "ja": "このペンはだれのものですか。",
+    "answers": [
+      "Whose is this pen?",
+      "Whose pen is this?"
+    ]
+  },
+  {
+    "id": "J-085",
+    "level": 2,
+    "pattern": "代名詞(数量)",
+    "ja": "私はお金を少し持っています。",
+    "answers": [
+      "I have some money.",
+      "I have a little money."
+    ]
+  },
+  {
+    "id": "J-086",
+    "level": 2,
+    "pattern": "代名詞(数量)",
+    "ja": "彼には友達がほとんどいません。",
+    "answers": [
+      "He has few friends."
+    ]
+  },
+  {
+    "id": "J-087",
+    "level": 2,
+    "pattern": "代名詞(数量)",
+    "ja": "私たちはたくさんの水は必要ありません。",
+    "answers": [
+      "We do not need much water."
+    ]
+  },
+  {
+    "id": "J-088",
+    "level": 2,
+    "pattern": "関係代名詞(主格)",
+    "ja": "私には英語を話せる友達がいます。",
+    "answers": [
+      "I have a friend who can speak English.",
+      "I have a friend that can speak English."
+    ]
+  },
+  {
+    "id": "J-089",
+    "level": 2,
+    "pattern": "関係代名詞(主格)",
+    "ja": "これは空港へ行くバスです。",
+    "answers": [
+      "This is the bus that goes to the airport.",
+      "This is the bus which goes to the airport."
+    ]
+  },
+  {
+    "id": "J-090",
+    "level": 2,
+    "pattern": "関係代名詞(主格)",
+    "ja": "窓のそばに立っている女性は私の母です。",
+    "answers": [
+      "The woman who is standing by the window is my mother.",
+      "The woman that is standing by the window is my mother.",
+      "The woman standing by the window is my mother."
+    ]
+  },
+  {
+    "id": "J-091",
+    "level": 2,
+    "pattern": "関係代名詞(目的格)",
+    "ja": "これは私が昨日買った本です。",
+    "answers": [
+      "This is the book that I bought yesterday.",
+      "This is the book which I bought yesterday.",
+      "This is the book I bought yesterday."
+    ]
+  },
+  {
+    "id": "J-092",
+    "level": 2,
+    "pattern": "関係代名詞(目的格)",
+    "ja": "彼は私が昨日会った男性です。",
+    "answers": [
+      "He is the man that I met yesterday.",
+      "He is the man who I met yesterday.",
+      "He is the man I met yesterday."
+    ]
+  },
+  {
+    "id": "J-093",
+    "level": 2,
+    "pattern": "関係代名詞(目的格)",
+    "ja": "彼女が作ったケーキはおいしかったです。",
+    "answers": [
+      "The cake that she made was delicious.",
+      "The cake which she made was delicious.",
+      "The cake she made was delicious.",
+      "The cake she made was good."
+    ]
+  },
+  {
+    "id": "J-094",
+    "level": 2,
+    "pattern": "接続詞(and、but、or)",
+    "ja": "私には兄と妹がいます。",
+    "answers": [
+      "I have a brother and a sister.",
+      "I have an older brother and a younger sister."
+    ]
+  },
+  {
+    "id": "J-095",
+    "level": 2,
+    "pattern": "接続詞(and、but、or)",
+    "ja": "彼は貧しかったが、幸せでした。",
+    "answers": [
+      "He was poor, but he was happy.",
+      "He was poor but happy."
+    ]
+  },
+  {
+    "id": "J-096",
+    "level": 2,
+    "pattern": "接続詞(and、but、or)",
+    "ja": "コーヒーか紅茶はいかがですか。",
+    "answers": [
+      "Would you like coffee or tea?"
+    ]
+  },
+  {
+    "id": "J-097",
+    "level": 2,
+    "pattern": "接続詞(that)",
+    "ja": "私は彼が忙しいことを知っています。",
+    "answers": [
+      "I know that he is busy.",
+      "I know he is busy."
+    ]
+  },
+  {
+    "id": "J-098",
+    "level": 2,
+    "pattern": "接続詞(that)",
+    "ja": "あなたは彼女が来ると思いますか。",
+    "answers": [
+      "Do you think that she will come?",
+      "Do you think she will come?"
+    ]
+  },
+  {
+    "id": "J-099",
+    "level": 2,
+    "pattern": "接続詞(that)",
+    "ja": "彼は疲れていると言いました。",
+    "answers": [
+      "He said that he was tired.",
+      "He said he was tired."
+    ]
+  },
+  {
+    "id": "J-100",
+    "level": 2,
+    "pattern": "接続詞(if、when)",
+    "ja": "もし明日雨なら、私は家にいます。",
+    "answers": [
+      "If it rains tomorrow, I will stay home.",
+      "I will stay home if it rains tomorrow.",
+      "If it rains tomorrow, I will stay at home.",
+      "I will stay at home if it rains tomorrow."
+    ]
+  },
+  {
+    "id": "J-101",
+    "level": 2,
+    "pattern": "接続詞(if、when)",
+    "ja": "私は若いとき、東京に住んでいました。",
+    "answers": [
+      "When I was young, I lived in Tokyo.",
+      "I lived in Tokyo when I was young."
+    ]
+  },
+  {
+    "id": "J-102",
+    "level": 2,
+    "pattern": "接続詞(if、when)",
+    "ja": "もし暇なら、私を手伝ってください。",
+    "answers": [
+      "If you are free, please help me.",
+      "Please help me if you are free."
+    ]
+  },
+  {
+    "id": "J-103",
+    "level": 2,
+    "pattern": "接続詞(because)",
+    "ja": "雨が降っていたので、私は家にいました。",
+    "answers": [
+      "I stayed home because it was raining.",
+      "I stayed at home because it was raining.",
+      "Because it was raining, I stayed home.",
+      "Because it was raining, I stayed at home."
+    ]
+  },
+  {
+    "id": "J-104",
+    "level": 2,
+    "pattern": "接続詞(because)",
+    "ja": "彼女は眠かったので、早く寝ました。",
+    "answers": [
+      "She went to bed early because she was sleepy.",
+      "Because she was sleepy, she went to bed early."
+    ]
+  },
+  {
+    "id": "J-105",
+    "level": 2,
+    "pattern": "接続詞(because)",
+    "ja": "私は音楽が好きなので、毎日ギターを弾きます。",
+    "answers": [
+      "I play the guitar every day because I like music.",
+      "Because I like music, I play the guitar every day."
+    ]
+  },
+  {
+    "id": "J-106",
+    "level": 2,
+    "pattern": "接続詞(as、than)",
+    "ja": "彼は私と同じくらいの背の高さです。",
+    "answers": [
+      "He is as tall as I am.",
+      "He is as tall as me."
+    ]
+  },
+  {
+    "id": "J-107",
+    "level": 2,
+    "pattern": "接続詞(as、than)",
+    "ja": "私は彼より年上です。",
+    "answers": [
+      "I am older than he is.",
+      "I am older than him."
+    ]
+  },
+  {
+    "id": "J-108",
+    "level": 2,
+    "pattern": "接続詞(as、than)",
+    "ja": "この川はあの川より長いです。",
+    "answers": [
+      "This river is longer than that one.",
+      "This river is longer than that river."
+    ]
+  },
+  {
+    "id": "J-109",
+    "level": 2,
+    "pattern": "助動詞(canの許可)",
+    "ja": "ここで写真を撮ってもいいですよ。",
+    "answers": [
+      "You can take pictures here.",
+      "You can take a picture here."
+    ]
+  },
+  {
+    "id": "J-110",
+    "level": 2,
+    "pattern": "助動詞(canの許可)",
+    "ja": "私のペンを使ってもいいですよ。",
+    "answers": [
+      "You can use my pen."
+    ]
+  },
+  {
+    "id": "J-111",
+    "level": 2,
+    "pattern": "助動詞(canの許可)",
+    "ja": "ここに座ってもいいですか。",
+    "answers": [
+      "Can I sit here?",
+      "May I sit here?"
+    ]
+  },
+  {
+    "id": "J-112",
+    "level": 2,
+    "pattern": "助動詞(canの依頼)",
+    "ja": "窓を閉めてくれますか。",
+    "answers": [
+      "Can you close the window?",
+      "Could you close the window?"
+    ]
+  },
+  {
+    "id": "J-113",
+    "level": 2,
+    "pattern": "助動詞(canの依頼)",
+    "ja": "このかばんを運んでくれますか。",
+    "answers": [
+      "Can you carry this bag?",
+      "Could you carry this bag?"
+    ]
+  },
+  {
+    "id": "J-114",
+    "level": 2,
+    "pattern": "助動詞(canの依頼)",
+    "ja": "塩を取ってくれますか。",
+    "answers": [
+      "Can you pass me the salt?",
+      "Can you pass the salt?",
+      "Could you pass me the salt?",
+      "Could you pass the salt?"
+    ]
+  },
+  {
+    "id": "J-115",
+    "level": 2,
+    "pattern": "助動詞(must)",
+    "ja": "あなたは今、家に帰らなければなりません。",
+    "answers": [
+      "You must go home now."
+    ]
+  },
+  {
+    "id": "J-116",
+    "level": 2,
+    "pattern": "助動詞(must)",
+    "ja": "私は宿題を終えなければなりません。",
+    "answers": [
+      "I must finish my homework.",
+      "I have to finish my homework."
+    ]
+  },
+  {
+    "id": "J-117",
+    "level": 2,
+    "pattern": "助動詞(must)",
+    "ja": "生徒は制服を着なければなりません。",
+    "answers": [
+      "Students must wear uniforms.",
+      "Students must wear a uniform."
+    ]
+  },
+  {
+    "id": "J-118",
+    "level": 2,
+    "pattern": "助動詞(must not)",
+    "ja": "ここで泳いではいけません。",
+    "answers": [
+      "You must not swim here."
+    ]
+  },
+  {
+    "id": "J-119",
+    "level": 2,
+    "pattern": "助動詞(must not)",
+    "ja": "図書館で話してはいけません。",
+    "answers": [
+      "You must not talk in the library."
+    ]
+  },
+  {
+    "id": "J-120",
+    "level": 2,
+    "pattern": "助動詞(must not)",
+    "ja": "その部屋に入ってはいけません。",
+    "answers": [
+      "You must not enter the room.",
+      "You must not enter that room.",
+      "You must not go into the room."
+    ]
+  },
+  {
+    "id": "J-121",
+    "level": 2,
+    "pattern": "助動詞(may)",
+    "ja": "中に入ってもいいですよ。",
+    "answers": [
+      "You may come in."
+    ]
+  },
+  {
+    "id": "J-122",
+    "level": 2,
+    "pattern": "助動詞(may)",
+    "ja": "この辞書を使ってもいいですよ。",
+    "answers": [
+      "You may use this dictionary."
+    ]
+  },
+  {
+    "id": "J-123",
+    "level": 2,
+    "pattern": "助動詞(may)",
+    "ja": "今日は早く帰ってもいいですよ。",
+    "answers": [
+      "You may go home early today."
+    ]
+  },
+  {
+    "id": "J-124",
+    "level": 2,
+    "pattern": "助動詞(should)",
+    "ja": "あなたはもっと野菜を食べるべきです。",
+    "answers": [
+      "You should eat more vegetables."
+    ]
+  },
+  {
+    "id": "J-125",
+    "level": 2,
+    "pattern": "助動詞(should)",
+    "ja": "私たちはもっと早く出発すべきです。",
+    "answers": [
+      "We should leave earlier."
+    ]
+  },
+  {
+    "id": "J-126",
+    "level": 2,
+    "pattern": "助動詞(should)",
+    "ja": "彼は医者に診てもらうべきです。",
+    "answers": [
+      "He should see a doctor."
+    ]
+  },
+  {
+    "id": "J-127",
+    "level": 2,
+    "pattern": "前置詞(出身)",
+    "ja": "私は東京出身です。",
+    "answers": [
+      "I am from Tokyo."
+    ]
+  },
+  {
+    "id": "J-128",
+    "level": 2,
+    "pattern": "前置詞(出身)",
+    "ja": "彼女はカナダ出身です。",
+    "answers": [
+      "She is from Canada."
+    ]
+  },
+  {
+    "id": "J-129",
+    "level": 2,
+    "pattern": "前置詞(出身)",
+    "ja": "彼らはどこの出身ですか。",
+    "answers": [
+      "Where are they from?"
+    ]
+  },
+  {
+    "id": "J-130",
+    "level": 2,
+    "pattern": "前置詞(時間、期間)",
+    "ja": "私は月曜日にテニスをします。",
+    "answers": [
+      "I play tennis on Monday.",
+      "I play tennis on Mondays."
+    ]
+  },
+  {
+    "id": "J-131",
+    "level": 2,
+    "pattern": "前置詞(時間、期間)",
+    "ja": "私は3年間ここに住んでいました。",
+    "answers": [
+      "I lived here for three years."
+    ]
+  },
+  {
+    "id": "J-132",
+    "level": 2,
+    "pattern": "前置詞(時間、期間)",
+    "ja": "授業は9時に始まります。",
+    "answers": [
+      "The class starts at nine.",
+      "Class starts at nine.",
+      "The class begins at nine.",
+      "Class begins at nine."
+    ]
+  },
+  {
+    "id": "J-133",
+    "level": 2,
+    "pattern": "前置詞(場所)",
+    "ja": "猫は机の下にいます。",
+    "answers": [
+      "The cat is under the desk."
+    ]
+  },
+  {
+    "id": "J-134",
+    "level": 2,
+    "pattern": "前置詞(場所)",
+    "ja": "私の家は駅の近くにあります。",
+    "answers": [
+      "My house is near the station."
+    ]
+  },
+  {
+    "id": "J-135",
+    "level": 2,
+    "pattern": "前置詞(場所)",
+    "ja": "私たちは公園で昼食を食べました。",
+    "answers": [
+      "We had lunch in the park.",
+      "We ate lunch in the park."
+    ]
+  },
+  {
+    "id": "J-136",
+    "level": 2,
+    "pattern": "現在形",
+    "ja": "私の父は毎朝コーヒーを飲みます。",
+    "answers": [
+      "My father drinks coffee every morning.",
+      "My father has coffee every morning."
+    ]
+  },
+  {
+    "id": "J-137",
+    "level": 2,
+    "pattern": "現在形",
+    "ja": "1年には12か月あります。",
+    "answers": [
+      "There are twelve months in a year."
+    ]
+  },
+  {
+    "id": "J-138",
+    "level": 2,
+    "pattern": "現在形",
+    "ja": "私たちは疲れています。",
+    "answers": [
+      "We are tired."
+    ]
+  },
+  {
+    "id": "J-139",
+    "level": 2,
+    "pattern": "過去形",
+    "ja": "彼は去年、アメリカにいました。",
+    "answers": [
+      "He was in America last year.",
+      "He was in the United States last year."
+    ]
+  },
+  {
+    "id": "J-140",
+    "level": 2,
+    "pattern": "過去形",
+    "ja": "私たちは昨日映画を見ました。",
+    "answers": [
+      "We saw a movie yesterday.",
+      "We watched a movie yesterday."
+    ]
+  },
+  {
+    "id": "J-141",
+    "level": 2,
+    "pattern": "過去形",
+    "ja": "彼女はパリで絵を買いました。",
+    "answers": [
+      "She bought a picture in Paris.",
+      "She bought a painting in Paris."
+    ]
+  },
+  {
+    "id": "J-142",
+    "level": 2,
+    "pattern": "現在進行形",
+    "ja": "私は今、昼食を食べています。",
+    "answers": [
+      "I am eating lunch now.",
+      "I am having lunch now."
+    ]
+  },
+  {
+    "id": "J-143",
+    "level": 2,
+    "pattern": "現在進行形",
+    "ja": "彼らはサッカーをしています。",
+    "answers": [
+      "They are playing soccer."
+    ]
+  },
+  {
+    "id": "J-144",
+    "level": 2,
+    "pattern": "現在進行形",
+    "ja": "妹は電話で話しています。",
+    "answers": [
+      "My sister is talking on the phone.",
+      "My little sister is talking on the phone.",
+      "My younger sister is talking on the phone."
+    ]
+  },
+  {
+    "id": "J-145",
+    "level": 2,
+    "pattern": "過去進行形",
+    "ja": "私はそのとき、本を読んでいました。",
+    "answers": [
+      "I was reading a book then.",
+      "I was reading a book at that time."
+    ]
+  },
+  {
+    "id": "J-146",
+    "level": 2,
+    "pattern": "過去進行形",
+    "ja": "彼らは公園を走っていました。",
+    "answers": [
+      "They were running in the park."
+    ]
+  },
+  {
+    "id": "J-147",
+    "level": 2,
+    "pattern": "過去進行形",
+    "ja": "彼が来たとき、私は風呂に入っていました。",
+    "answers": [
+      "I was taking a bath when he came.",
+      "When he came, I was taking a bath."
+    ]
+  },
+  {
+    "id": "J-148",
+    "level": 2,
+    "pattern": "現在完了形",
+    "ja": "私は10年間ここに住んでいます。",
+    "answers": [
+      "I have lived here for ten years."
+    ]
+  },
+  {
+    "id": "J-149",
+    "level": 2,
+    "pattern": "現在完了形",
+    "ja": "私はパリに2回行ったことがあります。",
+    "answers": [
+      "I have been to Paris twice."
+    ]
+  },
+  {
+    "id": "J-150",
+    "level": 2,
+    "pattern": "現在完了形",
+    "ja": "彼はちょうど昼食を終えたところです。",
+    "answers": [
+      "He has just finished lunch.",
+      "He has just finished his lunch."
+    ]
+  },
+  {
+    "id": "J-151",
+    "level": 2,
+    "pattern": "現在完了進行形",
+    "ja": "今朝からずっと雪が降っています。",
+    "answers": [
+      "It has been snowing since this morning."
+    ]
+  },
+  {
+    "id": "J-152",
+    "level": 2,
+    "pattern": "現在完了進行形",
+    "ja": "私は2時間ずっと勉強しています。",
+    "answers": [
+      "I have been studying for two hours."
+    ]
+  },
+  {
+    "id": "J-153",
+    "level": 2,
+    "pattern": "現在完了進行形",
+    "ja": "彼らは1時間ずっと話し続けています。",
+    "answers": [
+      "They have been talking for an hour.",
+      "They have been talking for one hour."
+    ]
+  },
+  {
+    "id": "J-154",
+    "level": 2,
+    "pattern": "未来の表現",
+    "ja": "明日は寒くなるでしょう。",
+    "answers": [
+      "It will be cold tomorrow."
+    ]
+  },
+  {
+    "id": "J-155",
+    "level": 2,
+    "pattern": "未来の表現",
+    "ja": "私は来週、祖母を訪ねるつもりです。",
+    "answers": [
+      "I am going to visit my grandmother next week.",
+      "I will visit my grandmother next week."
+    ]
+  },
+  {
+    "id": "J-156",
+    "level": 2,
+    "pattern": "未来の表現",
+    "ja": "彼は明日の夜、パーティーに来ます。",
+    "answers": [
+      "He is coming to the party tomorrow night.",
+      "He will come to the party tomorrow night.",
+      "He is going to come to the party tomorrow night."
+    ]
+  },
+  {
+    "id": "J-157",
+    "level": 2,
+    "pattern": "比較(原級)",
+    "ja": "この本はあの本と同じくらいおもしろいです。",
+    "answers": [
+      "This book is as interesting as that one.",
+      "This book is as interesting as that book."
+    ]
+  },
+  {
+    "id": "J-158",
+    "level": 2,
+    "pattern": "比較(原級)",
+    "ja": "彼は私の2倍の年齢です。",
+    "answers": [
+      "He is twice as old as I am.",
+      "He is twice as old as me."
+    ]
+  },
+  {
+    "id": "J-159",
+    "level": 2,
+    "pattern": "比較(原級)",
+    "ja": "私はあなたほど速く走れません。",
+    "answers": [
+      "I cannot run as fast as you.",
+      "I cannot run as fast as you can."
+    ]
+  },
+  {
+    "id": "J-160",
+    "level": 2,
+    "pattern": "比較(比較級)",
+    "ja": "この映画はあの映画より人気があります。",
+    "answers": [
+      "This movie is more popular than that one.",
+      "This movie is more popular than that movie."
+    ]
+  },
+  {
+    "id": "J-161",
+    "level": 2,
+    "pattern": "比較(比較級)",
+    "ja": "彼は私より3歳年下です。",
+    "answers": [
+      "He is three years younger than I am.",
+      "He is three years younger than me."
+    ]
+  },
+  {
+    "id": "J-162",
+    "level": 2,
+    "pattern": "比較(比較級)",
+    "ja": "私の弟は私より上手に泳げます。",
+    "answers": [
+      "My brother can swim better than I can.",
+      "My brother can swim better than me.",
+      "My younger brother can swim better than I can.",
+      "My younger brother can swim better than me."
+    ]
+  },
+  {
+    "id": "J-163",
+    "level": 2,
+    "pattern": "比較(最上級)",
+    "ja": "彼はクラスで一番背が高いです。",
+    "answers": [
+      "He is the tallest in his class.",
+      "He is the tallest in the class.",
+      "He is the tallest student in his class."
+    ]
+  },
+  {
+    "id": "J-164",
+    "level": 2,
+    "pattern": "比較(最上級)",
+    "ja": "これはこの店で一番高いかばんです。",
+    "answers": [
+      "This is the most expensive bag in this store.",
+      "This is the most expensive bag in this shop.",
+      "This is the most expensive bag in the store.",
+      "This is the most expensive bag in the shop."
+    ]
+  },
+  {
+    "id": "J-165",
+    "level": 2,
+    "pattern": "比較(最上級)",
+    "ja": "富士山は日本で一番高い山です。",
+    "answers": [
+      "Mount Fuji is the highest mountain in Japan."
+    ]
+  },
+  {
+    "id": "J-166",
+    "level": 2,
+    "pattern": "to不定詞(名詞的用法)",
+    "ja": "私の夢は先生になることです。",
+    "answers": [
+      "My dream is to be a teacher.",
+      "My dream is to become a teacher."
+    ]
+  },
+  {
+    "id": "J-167",
+    "level": 2,
+    "pattern": "to不定詞(名詞的用法)",
+    "ja": "外国語を学ぶことは楽しいです。",
+    "answers": [
+      "To learn a foreign language is fun.",
+      "Learning a foreign language is fun.",
+      "It is fun to learn a foreign language."
+    ]
+  },
+  {
+    "id": "J-168",
+    "level": 2,
+    "pattern": "to不定詞(名詞的用法)",
+    "ja": "私は音楽を聴くのが好きです。",
+    "answers": [
+      "I like to listen to music.",
+      "I like listening to music."
+    ]
+  },
+  {
+    "id": "J-169",
+    "level": 2,
+    "pattern": "to不定詞(形容詞的用法)",
+    "ja": "私には今日するべきことがたくさんあります。",
+    "answers": [
+      "I have a lot of things to do today.",
+      "I have many things to do today."
+    ]
+  },
+  {
+    "id": "J-170",
+    "level": 2,
+    "pattern": "to不定詞(形容詞的用法)",
+    "ja": "私は何か飲むものが欲しいです。",
+    "answers": [
+      "I want something to drink."
+    ]
+  },
+  {
+    "id": "J-171",
+    "level": 2,
+    "pattern": "to不定詞(形容詞的用法)",
+    "ja": "彼には読む本がありません。",
+    "answers": [
+      "He has no books to read.",
+      "He does not have any books to read."
+    ]
+  },
+  {
+    "id": "J-172",
+    "level": 2,
+    "pattern": "to不定詞(副詞的用法)",
+    "ja": "私は本を買うために本屋へ行きました。",
+    "answers": [
+      "I went to the bookstore to buy a book."
+    ]
+  },
+  {
+    "id": "J-173",
+    "level": 2,
+    "pattern": "to不定詞(副詞的用法)",
+    "ja": "彼は医者になるために一生懸命勉強しています。",
+    "answers": [
+      "He is studying hard to be a doctor.",
+      "He is studying hard to become a doctor.",
+      "He studies hard to be a doctor.",
+      "He studies hard to become a doctor."
+    ]
+  },
+  {
+    "id": "J-174",
+    "level": 2,
+    "pattern": "to不定詞(副詞的用法)",
+    "ja": "私はその知らせを聞いて驚きました。",
+    "answers": [
+      "I was surprised to hear the news."
+    ]
+  },
+  {
+    "id": "J-175",
+    "level": 2,
+    "pattern": "動名詞",
+    "ja": "写真を撮ることは楽しいです。",
+    "answers": [
+      "Taking pictures is fun.",
+      "Taking photos is fun."
+    ]
+  },
+  {
+    "id": "J-176",
+    "level": 2,
+    "pattern": "動名詞",
+    "ja": "彼は絵を描くことが得意です。",
+    "answers": [
+      "He is good at drawing pictures.",
+      "He is good at drawing.",
+      "He is good at painting."
+    ]
+  },
+  {
+    "id": "J-177",
+    "level": 2,
+    "pattern": "動名詞",
+    "ja": "手伝ってくれてありがとう。",
+    "answers": [
+      "Thank you for helping me.",
+      "Thanks for helping me."
+    ]
+  },
+  {
+    "id": "J-178",
+    "level": 2,
+    "pattern": "分詞の形容詞用法(名詞の前)",
+    "ja": "私は割れた皿を見つけました。",
+    "answers": [
+      "I found a broken plate.",
+      "I found a broken dish."
+    ]
+  },
+  {
+    "id": "J-179",
+    "level": 2,
+    "pattern": "分詞の形容詞用法(名詞の前)",
+    "ja": "走っている犬を見てください。",
+    "answers": [
+      "Look at the running dog.",
+      "Please look at the running dog."
+    ]
+  },
+  {
+    "id": "J-180",
+    "level": 2,
+    "pattern": "分詞の形容詞用法(名詞の前)",
+    "ja": "私たちは眠っている赤ちゃんを見ました。",
+    "answers": [
+      "We saw a sleeping baby."
+    ]
+  },
+  {
+    "id": "J-181",
+    "level": 2,
+    "pattern": "分詞の形容詞用法(名詞の後)",
+    "ja": "ベンチに座っている少年は私の弟です。",
+    "answers": [
+      "The boy sitting on the bench is my brother.",
+      "The boy sitting on the bench is my younger brother.",
+      "The boy who is sitting on the bench is my brother."
+    ]
+  },
+  {
+    "id": "J-182",
+    "level": 2,
+    "pattern": "分詞の形容詞用法(名詞の後)",
+    "ja": "これは英語で書かれた手紙です。",
+    "answers": [
+      "This is a letter written in English."
+    ]
+  },
+  {
+    "id": "J-183",
+    "level": 2,
+    "pattern": "分詞の形容詞用法(名詞の後)",
+    "ja": "私はドイツ製の車を持っています。",
+    "answers": [
+      "I have a car made in Germany."
+    ]
+  },
+  {
+    "id": "J-184",
+    "level": 2,
+    "pattern": "受け身",
+    "ja": "この歌は世界中で歌われています。",
+    "answers": [
+      "This song is sung all over the world.",
+      "This song is sung around the world."
+    ]
+  },
+  {
+    "id": "J-185",
+    "level": 2,
+    "pattern": "受け身",
+    "ja": "この寺は500年前に建てられました。",
+    "answers": [
+      "This temple was built five hundred years ago."
+    ]
+  },
+  {
+    "id": "J-186",
+    "level": 2,
+    "pattern": "受け身",
+    "ja": "新しい橋が来年造られるでしょう。",
+    "answers": [
+      "A new bridge will be built next year."
+    ]
+  },
+  {
+    "id": "J-187",
+    "level": 2,
+    "pattern": "仮定法(Ifの文)",
+    "ja": "もし私が鳥なら、あなたのところへ飛んでいくのに。",
+    "answers": [
+      "If I were a bird, I would fly to you."
+    ]
+  },
+  {
+    "id": "J-188",
+    "level": 2,
+    "pattern": "仮定法(Ifの文)",
+    "ja": "もしお金がたくさんあれば、世界中を旅行するのに。",
+    "answers": [
+      "If I had a lot of money, I would travel around the world.",
+      "If I had a lot of money, I would travel all over the world."
+    ]
+  },
+  {
+    "id": "J-189",
+    "level": 2,
+    "pattern": "仮定法(Ifの文)",
+    "ja": "もし時間があれば、あなたを手伝えるのに。",
+    "answers": [
+      "If I had time, I could help you."
+    ]
+  },
+  {
+    "id": "J-190",
+    "level": 2,
+    "pattern": "仮定法(I wishの文)",
+    "ja": "私に姉がいればいいのに。",
+    "answers": [
+      "I wish I had a sister.",
+      "I wish I had an older sister."
+    ]
+  },
+  {
+    "id": "J-191",
+    "level": 2,
+    "pattern": "仮定法(I wishの文)",
+    "ja": "私が英語を話せたらいいのに。",
+    "answers": [
+      "I wish I could speak English."
+    ]
+  },
+  {
+    "id": "J-192",
+    "level": 2,
+    "pattern": "仮定法(I wishの文)",
+    "ja": "今日が日曜日ならいいのに。",
+    "answers": [
+      "I wish today were Sunday.",
+      "I wish today was Sunday.",
+      "I wish it were Sunday today."
+    ]
+  },
+  {
+    "id": "H-001",
+    "level": 3,
+    "pattern": "主語+be動詞以外の動詞+分詞",
+    "ja": "子どもたちは歌いながらやって来ました。",
+    "answers": [
+      "The children came singing."
+    ]
+  },
+  {
+    "id": "H-002",
+    "level": 3,
+    "pattern": "主語+be動詞以外の動詞+分詞",
+    "ja": "彼女はその知らせに興奮しているようでした。",
+    "answers": [
+      "She looked excited about the news.",
+      "She seemed excited about the news."
+    ]
+  },
+  {
+    "id": "H-003",
+    "level": 3,
+    "pattern": "主語+be動詞以外の動詞+分詞",
+    "ja": "彼は椅子に座ったままでいました。",
+    "answers": [
+      "He remained seated on the chair.",
+      "He remained seated in the chair.",
+      "He stayed seated on the chair.",
+      "He stayed seated in the chair."
+    ]
+  },
+  {
+    "id": "H-004",
+    "level": 3,
+    "pattern": "主語+動詞+if節",
+    "ja": "その店が開いているかどうか分かりません。",
+    "answers": [
+      "I do not know if the store is open.",
+      "I do not know whether the store is open.",
+      "I do not know if the shop is open.",
+      "I do not know whether the shop is open."
+    ]
+  },
+  {
+    "id": "H-005",
+    "level": 3,
+    "pattern": "主語+動詞+if節",
+    "ja": "彼が来るかどうか、私は知りたいです。",
+    "answers": [
+      "I want to know if he will come.",
+      "I want to know whether he will come.",
+      "I want to know if he is coming."
+    ]
+  },
+  {
+    "id": "H-006",
+    "level": 3,
+    "pattern": "主語+動詞+if節",
+    "ja": "彼女は、明日晴れるだろうかと思っています。",
+    "answers": [
+      "She wonders if it will be sunny tomorrow.",
+      "She is wondering if it will be sunny tomorrow.",
+      "She wonders whether it will be sunny tomorrow."
+    ]
+  },
+  {
+    "id": "H-007",
+    "level": 3,
+    "pattern": "主語+動詞+間接目的語+if節",
+    "ja": "私は彼に、忙しいかどうか尋ねました。",
+    "answers": [
+      "I asked him if he was busy.",
+      "I asked him whether he was busy."
+    ]
+  },
+  {
+    "id": "H-008",
+    "level": 3,
+    "pattern": "主語+動詞+間接目的語+if節",
+    "ja": "彼女は私に、手伝えるかどうか尋ねました。",
+    "answers": [
+      "She asked me if I could help her.",
+      "She asked me whether I could help her.",
+      "She asked me if I could help."
+    ]
+  },
+  {
+    "id": "H-009",
+    "level": 3,
+    "pattern": "主語+動詞+間接目的語+if節",
+    "ja": "来られるかどうか私に教えてください。",
+    "answers": [
+      "Please tell me if you can come.",
+      "Please tell me whether you can come.",
+      "Tell me if you can come, please.",
+      "Please let me know if you can come."
+    ]
+  },
+  {
+    "id": "H-010",
+    "level": 3,
+    "pattern": "主語+動詞+目的語+分詞",
+    "ja": "私は彼が通りを歩いているのを見ました。",
+    "answers": [
+      "I saw him walking on the street.",
+      "I saw him walking along the street.",
+      "I saw him walking down the street."
+    ]
+  },
+  {
+    "id": "H-011",
+    "level": 3,
+    "pattern": "主語+動詞+目的語+分詞",
+    "ja": "私は腕時計を修理してもらいました。",
+    "answers": [
+      "I had my watch repaired.",
+      "I got my watch repaired.",
+      "I had my watch fixed.",
+      "I got my watch fixed."
+    ]
+  },
+  {
+    "id": "H-012",
+    "level": 3,
+    "pattern": "主語+動詞+目的語+分詞",
+    "ja": "彼は自分の名前が呼ばれるのを聞きました。",
+    "answers": [
+      "He heard his name called."
+    ]
+  },
+  {
+    "id": "H-013",
+    "level": 3,
+    "pattern": "主語+seemなど+to不定詞",
+    "ja": "彼は幸せそうです。",
+    "answers": [
+      "He seems to be happy.",
+      "He seems happy.",
+      "It seems that he is happy."
+    ]
+  },
+  {
+    "id": "H-014",
+    "level": 3,
+    "pattern": "主語+seemなど+to不定詞",
+    "ja": "彼女は疲れているようです。",
+    "answers": [
+      "She seems to be tired.",
+      "She seems tired.",
+      "It seems that she is tired."
+    ]
+  },
+  {
+    "id": "H-015",
+    "level": 3,
+    "pattern": "主語+seemなど+to不定詞",
+    "ja": "彼らはその話を知っているようです。",
+    "answers": [
+      "They seem to know the story.",
+      "It seems that they know the story."
+    ]
+  },
+  {
+    "id": "H-016",
+    "level": 3,
+    "pattern": "It+seemなど+that節",
+    "ja": "彼は病気のようです。",
+    "answers": [
+      "It seems that he is sick.",
+      "It seems he is sick.",
+      "It seems that he is ill.",
+      "It seems he is ill.",
+      "He seems to be sick.",
+      "He seems to be ill."
+    ]
+  },
+  {
+    "id": "H-017",
+    "level": 3,
+    "pattern": "It+seemなど+that節",
+    "ja": "明日は雨が降るようです。",
+    "answers": [
+      "It seems that it will rain tomorrow.",
+      "It seems it will rain tomorrow."
+    ]
+  },
+  {
+    "id": "H-018",
+    "level": 3,
+    "pattern": "It+seemなど+that節",
+    "ja": "彼女は真実を知っているようです。",
+    "answers": [
+      "It seems that she knows the truth.",
+      "It seems she knows the truth.",
+      "She seems to know the truth."
+    ]
+  },
+  {
+    "id": "H-019",
+    "level": 3,
+    "pattern": "知覚動詞+原形不定詞",
+    "ja": "私は彼が部屋に入るのを見ました。",
+    "answers": [
+      "I saw him enter the room.",
+      "I saw him go into the room.",
+      "I saw him come into the room."
+    ]
+  },
+  {
+    "id": "H-020",
+    "level": 3,
+    "pattern": "知覚動詞+原形不定詞",
+    "ja": "私はだれかがドアをノックするのを聞きました。",
+    "answers": [
+      "I heard someone knock on the door.",
+      "I heard somebody knock on the door."
+    ]
+  },
+  {
+    "id": "H-021",
+    "level": 3,
+    "pattern": "知覚動詞+原形不定詞",
+    "ja": "私は地面が揺れるのを感じました。",
+    "answers": [
+      "I felt the ground shake."
+    ]
+  },
+  {
+    "id": "H-022",
+    "level": 3,
+    "pattern": "関係代名詞(what)",
+    "ja": "私は彼が言ったことを信じます。",
+    "answers": [
+      "I believe what he said."
+    ]
+  },
+  {
+    "id": "H-023",
+    "level": 3,
+    "pattern": "関係代名詞(what)",
+    "ja": "これは私が欲しかったものです。",
+    "answers": [
+      "This is what I wanted."
+    ]
+  },
+  {
+    "id": "H-024",
+    "level": 3,
+    "pattern": "関係代名詞(what)",
+    "ja": "あなたが必要なものを教えてください。",
+    "answers": [
+      "Please tell me what you need.",
+      "Tell me what you need, please."
+    ]
+  },
+  {
+    "id": "H-025",
+    "level": 3,
+    "pattern": "関係代名詞(非制限的用法)",
+    "ja": "私の父は東京に住んでいますが、来週ここへ来ます。",
+    "answers": [
+      "My father, who lives in Tokyo, will come here next week."
+    ]
+  },
+  {
+    "id": "H-026",
+    "level": 3,
+    "pattern": "関係代名詞(非制限的用法)",
+    "ja": "私はケンに会い、彼が私に真実を話してくれました。",
+    "answers": [
+      "I met Ken, who told me the truth."
+    ]
+  },
+  {
+    "id": "H-027",
+    "level": 3,
+    "pattern": "関係代名詞(非制限的用法)",
+    "ja": "彼は新しい車を買いましたが、それは高価でした。",
+    "answers": [
+      "He bought a new car, which was expensive."
+    ]
+  },
+  {
+    "id": "H-028",
+    "level": 3,
+    "pattern": "関係副詞",
+    "ja": "ここは私が生まれた町です。",
+    "answers": [
+      "This is the town where I was born.",
+      "This is the town I was born in."
+    ]
+  },
+  {
+    "id": "H-029",
+    "level": 3,
+    "pattern": "関係副詞",
+    "ja": "私は私たちが初めて会った日を覚えています。",
+    "answers": [
+      "I remember the day when we first met.",
+      "I remember the day we first met."
+    ]
+  },
+  {
+    "id": "H-030",
+    "level": 3,
+    "pattern": "関係副詞",
+    "ja": "それが私が遅れた理由です。",
+    "answers": [
+      "That is why I was late.",
+      "That is the reason why I was late.",
+      "That is the reason I was late."
+    ]
+  },
+  {
+    "id": "H-031",
+    "level": 3,
+    "pattern": "接続詞の発展的な用法",
+    "ja": "雨が降っていましたが、私たちは出かけました。",
+    "answers": [
+      "Although it was raining, we went out.",
+      "Though it was raining, we went out.",
+      "We went out although it was raining.",
+      "We went out though it was raining."
+    ]
+  },
+  {
+    "id": "H-032",
+    "level": 3,
+    "pattern": "接続詞の発展的な用法",
+    "ja": "駅に着いたらすぐにあなたに電話します。",
+    "answers": [
+      "I will call you as soon as I get to the station.",
+      "I will call you as soon as I arrive at the station.",
+      "As soon as I get to the station, I will call you.",
+      "As soon as I arrive at the station, I will call you."
+    ]
+  },
+  {
+    "id": "H-033",
+    "level": 3,
+    "pattern": "接続詞の発展的な用法",
+    "ja": "急がなければ、電車に乗り遅れますよ。",
+    "answers": [
+      "Unless you hurry, you will miss the train.",
+      "You will miss the train unless you hurry.",
+      "If you do not hurry, you will miss the train.",
+      "You will miss the train if you do not hurry."
+    ]
+  },
+  {
+    "id": "H-034",
+    "level": 3,
+    "pattern": "助動詞の過去形",
+    "ja": "私は若いころ、速く走ることができました。",
+    "answers": [
+      "I could run fast when I was young.",
+      "When I was young, I could run fast."
+    ]
+  },
+  {
+    "id": "H-035",
+    "level": 3,
+    "pattern": "助動詞の過去形",
+    "ja": "彼女は来ると言いました。",
+    "answers": [
+      "She said she would come.",
+      "She said that she would come."
+    ]
+  },
+  {
+    "id": "H-036",
+    "level": 3,
+    "pattern": "助動詞の過去形",
+    "ja": "窓を開けていただけますか。",
+    "answers": [
+      "Could you open the window?",
+      "Would you open the window?",
+      "Could you please open the window?"
+    ]
+  },
+  {
+    "id": "H-037",
+    "level": 3,
+    "pattern": "助動詞を含む受け身",
+    "ja": "この仕事は今日終えられなければなりません。",
+    "answers": [
+      "This work must be finished today."
+    ]
+  },
+  {
+    "id": "H-038",
+    "level": 3,
+    "pattern": "助動詞を含む受け身",
+    "ja": "星はここから見ることができます。",
+    "answers": [
+      "Stars can be seen from here.",
+      "The stars can be seen from here."
+    ]
+  },
+  {
+    "id": "H-039",
+    "level": 3,
+    "pattern": "助動詞を含む受け身",
+    "ja": "その会議は来週開かれるでしょう。",
+    "answers": [
+      "The meeting will be held next week."
+    ]
+  },
+  {
+    "id": "H-040",
+    "level": 3,
+    "pattern": "助動詞+完了形(過去の推測)",
+    "ja": "彼はその電車に乗り遅れたにちがいありません。",
+    "answers": [
+      "He must have missed the train."
+    ]
+  },
+  {
+    "id": "H-041",
+    "level": 3,
+    "pattern": "助動詞+完了形(過去の推測)",
+    "ja": "彼女は家に傘を忘れたのかもしれません。",
+    "answers": [
+      "She may have left her umbrella at home.",
+      "She might have left her umbrella at home."
+    ]
+  },
+  {
+    "id": "H-042",
+    "level": 3,
+    "pattern": "助動詞+完了形(過去の推測)",
+    "ja": "彼がそれを言ったはずがありません。",
+    "answers": [
+      "He cannot have said that.",
+      "He cannot have said it."
+    ]
+  },
+  {
+    "id": "H-043",
+    "level": 3,
+    "pattern": "前置詞(時間、場所の多様な表現)",
+    "ja": "私は5時までにここへ戻ります。",
+    "answers": [
+      "I will be back here by five.",
+      "I will come back here by five."
+    ]
+  },
+  {
+    "id": "H-044",
+    "level": 3,
+    "pattern": "前置詞(時間、場所の多様な表現)",
+    "ja": "彼は昼食の間、話していました。",
+    "answers": [
+      "He was talking during lunch.",
+      "He talked during lunch."
+    ]
+  },
+  {
+    "id": "H-045",
+    "level": 3,
+    "pattern": "前置詞(時間、場所の多様な表現)",
+    "ja": "川に沿って歩きましょう。",
+    "answers": [
+      "Let us walk along the river."
+    ]
+  },
+  {
+    "id": "H-046",
+    "level": 3,
+    "pattern": "名詞化した動詞+前置詞",
+    "ja": "その試合の中止は残念でした。",
+    "answers": [
+      "The cancellation of the game was disappointing.",
+      "The cancellation of the match was disappointing."
+    ]
+  },
+  {
+    "id": "H-047",
+    "level": 3,
+    "pattern": "名詞化した動詞+前置詞",
+    "ja": "新しい駅の建設は来年始まります。",
+    "answers": [
+      "The construction of the new station will start next year.",
+      "The construction of the new station will begin next year."
+    ]
+  },
+  {
+    "id": "H-048",
+    "level": 3,
+    "pattern": "名詞化した動詞+前置詞",
+    "ja": "飛行機の到着が遅れました。",
+    "answers": [
+      "The arrival of the plane was delayed.",
+      "The arrival of the airplane was delayed."
+    ]
+  },
+  {
+    "id": "H-049",
+    "level": 3,
+    "pattern": "前置詞+動名詞や関係詞",
+    "ja": "彼は何も言わずに部屋を出ました。",
+    "answers": [
+      "He left the room without saying anything."
+    ]
+  },
+  {
+    "id": "H-050",
+    "level": 3,
+    "pattern": "前置詞+動名詞や関係詞",
+    "ja": "寝る前に歯を磨きなさい。",
+    "answers": [
+      "Brush your teeth before going to bed.",
+      "Brush your teeth before you go to bed."
+    ]
+  },
+  {
+    "id": "H-051",
+    "level": 3,
+    "pattern": "前置詞+動名詞や関係詞",
+    "ja": "これは私が住んでいる家です。",
+    "answers": [
+      "This is the house in which I live.",
+      "This is the house I live in.",
+      "This is the house where I live.",
+      "This is the house that I live in."
+    ]
+  },
+  {
+    "id": "H-052",
+    "level": 3,
+    "pattern": "動詞+前置詞の連語",
+    "ja": "彼女はその悲しみを乗り越えました。",
+    "answers": [
+      "She got over the sadness.",
+      "She got over her sadness."
+    ]
+  },
+  {
+    "id": "H-053",
+    "level": 3,
+    "pattern": "動詞+前置詞の連語",
+    "ja": "私たちはその問題を調べました。",
+    "answers": [
+      "We looked into the problem."
+    ]
+  },
+  {
+    "id": "H-054",
+    "level": 3,
+    "pattern": "動詞+前置詞の連語",
+    "ja": "彼は大変な時期を経験しました。",
+    "answers": [
+      "He went through a hard time.",
+      "He went through hard times.",
+      "He went through a difficult time."
+    ]
+  },
+  {
+    "id": "H-055",
+    "level": 3,
+    "pattern": "前置詞を含む慣用表現",
+    "ja": "少なくとも1時間は勉強しなさい。",
+    "answers": [
+      "Study for at least one hour.",
+      "Study for at least an hour.",
+      "Study at least one hour.",
+      "Study at least an hour."
+    ]
+  },
+  {
+    "id": "H-056",
+    "level": 3,
+    "pattern": "前置詞を含む慣用表現",
+    "ja": "さらに、彼女は英語も話せます。",
+    "answers": [
+      "In addition, she can speak English.",
+      "In addition, she can also speak English."
+    ]
+  },
+  {
+    "id": "H-057",
+    "level": 3,
+    "pattern": "前置詞を含む慣用表現",
+    "ja": "結局、私たちは家に帰りました。",
+    "answers": [
+      "In the end, we went home.",
+      "After all, we went home."
+    ]
+  },
+  {
+    "id": "H-058",
+    "level": 3,
+    "pattern": "過去完了形",
+    "ja": "私が駅に着いたとき、電車はすでに出発していました。",
+    "answers": [
+      "When I got to the station, the train had already left.",
+      "The train had already left when I got to the station.",
+      "When I arrived at the station, the train had already left.",
+      "The train had already left when I arrived at the station."
+    ]
+  },
+  {
+    "id": "H-059",
+    "level": 3,
+    "pattern": "過去完了形",
+    "ja": "彼はそれ以前にパリへ行ったことがありました。",
+    "answers": [
+      "He had been to Paris before.",
+      "He had been to Paris before that."
+    ]
+  },
+  {
+    "id": "H-060",
+    "level": 3,
+    "pattern": "過去完了形",
+    "ja": "私は彼女に会う前にその本を読んでいました。",
+    "answers": [
+      "I had read the book before I met her."
+    ]
+  },
+  {
+    "id": "H-061",
+    "level": 3,
+    "pattern": "過去完了進行形",
+    "ja": "彼が来たとき、私は2時間ずっと待っていました。",
+    "answers": [
+      "I had been waiting for two hours when he came.",
+      "When he came, I had been waiting for two hours."
+    ]
+  },
+  {
+    "id": "H-062",
+    "level": 3,
+    "pattern": "過去完了進行形",
+    "ja": "彼女は一晩中勉強し続けていたので、疲れていました。",
+    "answers": [
+      "She was tired because she had been studying all night.",
+      "Because she had been studying all night, she was tired."
+    ]
+  },
+  {
+    "id": "H-063",
+    "level": 3,
+    "pattern": "過去完了進行形",
+    "ja": "雨がやむまで、3日間ずっと降り続いていました。",
+    "answers": [
+      "It had been raining for three days before it stopped.",
+      "It had been raining for three days until it stopped."
+    ]
+  },
+  {
+    "id": "H-064",
+    "level": 3,
+    "pattern": "仮定法の発展的な用法",
+    "ja": "もし早く起きていたら、電車に間に合ったのに。",
+    "answers": [
+      "If I had gotten up early, I could have caught the train.",
+      "If I had got up early, I could have caught the train.",
+      "If I had gotten up early, I would have caught the train.",
+      "If I had got up early, I would have caught the train."
+    ]
+  },
+  {
+    "id": "H-065",
+    "level": 3,
+    "pattern": "仮定法の発展的な用法",
+    "ja": "もし彼に会っていたら、真実を話していたでしょう。",
+    "answers": [
+      "If I had met him, I would have told him the truth."
+    ]
+  },
+  {
+    "id": "H-066",
+    "level": 3,
+    "pattern": "仮定法の発展的な用法",
+    "ja": "彼はまるで真実を知っているかのように話します。",
+    "answers": [
+      "He talks as if he knew the truth.",
+      "He speaks as if he knew the truth."
+    ]
+  },
+  {
+    "id": "H-067",
+    "level": 3,
+    "pattern": "itが句や節を指す用法",
+    "ja": "彼が来ることは確かです。",
+    "answers": [
+      "It is certain that he will come.",
+      "It is sure that he will come."
+    ]
+  },
+  {
+    "id": "H-068",
+    "level": 3,
+    "pattern": "itが句や節を指す用法",
+    "ja": "私はこの本を読むのは難しいと思いました。",
+    "answers": [
+      "I found it difficult to read this book.",
+      "I found it hard to read this book."
+    ]
+  },
+  {
+    "id": "H-069",
+    "level": 3,
+    "pattern": "itが句や節を指す用法",
+    "ja": "彼女が試験に合格したのは本当です。",
+    "answers": [
+      "It is true that she passed the exam.",
+      "It is true that she passed the test."
+    ]
+  },
+  {
+    "id": "H-070",
+    "level": 3,
+    "pattern": "分詞構文",
+    "ja": "音楽を聞きながら、彼は宿題をしました。",
+    "answers": [
+      "Listening to music, he did his homework.",
+      "He did his homework listening to music.",
+      "He did his homework while listening to music."
+    ]
+  },
+  {
+    "id": "H-071",
+    "level": 3,
+    "pattern": "分詞構文",
+    "ja": "空腹だったので、私はパンを食べました。",
+    "answers": [
+      "Being hungry, I ate some bread.",
+      "Feeling hungry, I ate some bread.",
+      "I ate some bread because I was hungry."
+    ]
+  },
+  {
+    "id": "H-072",
+    "level": 3,
+    "pattern": "分詞構文",
+    "ja": "駅に着いて、私は彼に電話しました。",
+    "answers": [
+      "Arriving at the station, I called him.",
+      "Getting to the station, I called him.",
+      "When I arrived at the station, I called him."
+    ]
+  }
 ]

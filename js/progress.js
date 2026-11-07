@@ -80,9 +80,14 @@ export function weakQuestionIds(progress) {
     .map(([id]) => id);
 }
 
-/** 全期間の回答数と正解率を求める。 */
-export function totals(progress) {
-  const stats = Object.values(progress.stats);
+/**
+ * 全期間の回答数と正解率を求める。
+ * knownIds を渡すと、その問題だけを数える。問題を入れ替えた後も古い記録は消さないため、ここで除く。
+ */
+export function totals(progress, knownIds = null) {
+  const stats = Object.entries(progress.stats)
+    .filter(([id]) => !knownIds || knownIds.has(id))
+    .map(([, stat]) => stat);
   const attempts = stats.reduce((sum, stat) => sum + stat.attempts, 0);
   const correct = stats.reduce((sum, stat) => sum + stat.correct, 0);
   return { attempts, correct, rate: attempts === 0 ? 0 : Math.round((correct / attempts) * 100) };

@@ -110,6 +110,21 @@ describe('判定', () => {
     assert.equal(judge({ candidates: ['I am to tired too walk'], answers: ['I am too tired to walk.'] }).result, 'correct');
   });
 
+  it('音声認識が返す古い綴りは正解', () => {
+    assert.equal(judge({ candidates: ['Will it rain to-morrow'], answers: ['Will it rain tomorrow?'] }).result, 'correct');
+    assert.equal(judge({ candidates: ['You may go home early to-day'], answers: ['You may go home early today.'] }).result, 'correct');
+    assert.equal(judge({ candidates: ['I will call you to-night'], answers: ['I will call you tonight.'] }).result, 'correct');
+  });
+
+  it("whose を who's と認識しても正解", () => {
+    assert.equal(judge({ candidates: ["Who's notebook is this?"], answers: ['Whose notebook is this?'] }).result, 'correct');
+    assert.equal(judge({ candidates: ["who's is this pen"], answers: ['Whose is this pen?'] }).result, 'correct');
+  });
+
+  it("who's は who is としても判定する", () => {
+    assert.equal(judge({ candidates: ["Who's that man?"], answers: ['Who is that man?'] }).result, 'correct');
+  });
+
   it('数字と綴りの違いは正解', () => {
     assert.equal(judge({ candidates: ['this temple was built five hundred years ago'], answers: ['This temple was built 500 years ago.'] }).result, 'correct');
     assert.equal(judge({ candidates: ['I have lived in this town for 10 years'], answers: ['I have lived in this town for ten years.'] }).result, 'correct');

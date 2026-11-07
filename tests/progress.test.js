@@ -80,6 +80,13 @@ describe('学習記録', () => {
   it('記録がなければ正解率は 0', () => {
     assert.deepEqual(totals(emptyProgress()), { attempts: 0, correct: 0, rate: 0 });
   });
+
+  it('入れ替えで収録されなくなった問題は、回答数と正解率に数えない', () => {
+    const progress = emptyProgress();
+    recordResult(progress, 'a', 'correct');
+    recordResult(progress, 'old', 'wrong');
+    assert.deepEqual(totals(progress, new Set(['a'])), { attempts: 1, correct: 1, rate: 100 });
+  });
 });
 
 describe('正解の追加', () => {

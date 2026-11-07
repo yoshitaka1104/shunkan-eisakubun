@@ -19,6 +19,10 @@ const FULL_EXPANSIONS = new Map([
   ["let's", 'let us'],
   ['gonna', 'going to'],
   ['wanna', 'want to'],
+  // 端末内の音声認識は、古い綴りで返すことがある。
+  ['to-day', 'today'],
+  ['to-morrow', 'tomorrow'],
+  ['to-night', 'tonight'],
 ]);
 
 const SUFFIX_EXPANSIONS = [
@@ -181,6 +185,15 @@ function parse(text) {
   };
 }
 
+/**
+ * 音声認識は whose を who's と書くことがある。
+ * who's は「who is」の場合もあって1語にそろえられないので、両方の読みで比べる。
+ */
+function withSpellingVariants(text) {
+  const variant = text.replace(/\bwho['’]s\b/gi, 'whose');
+  return variant === text ? [text] : [text, variant];
+}
+
 /** 比較用にそろえたトークン列を返す。 */
 export function normalize(text) {
   return parse(text).tokens;
@@ -252,6 +265,7 @@ function markWords(parsed, matched) {
 export function judge({ candidates, answers, threshold = CLOSE_THRESHOLD }) {
   const models = answers.map((text) => ({ text, parsed: parse(text) }));
   const spoken = candidates
+    .flatMap(withSpellingVariants)
     .map((text) => ({ text: text.trim(), parsed: parse(text) }))
     .filter((candidate) => candidate.parsed.tokens.length > 0);
 
