@@ -13,6 +13,10 @@ export function emptyProgress() {
     customAnswers: {},
     /** 最後に記録を書き出した日時(ISO 形式)。 */
     lastBackupAt: null,
+    /** 問題ごとの習熟度の段階と、次の復習の予定日(review.js)。 */
+    review: {},
+    /** 学習した日ごとの回答数。キーは 'YYYY-MM-DD'。 */
+    days: {},
   };
 }
 

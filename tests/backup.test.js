@@ -16,6 +16,8 @@ function sampleProgress() {
   recordResult(progress, 'E-001', 'correct', 1000);
   recordResult(progress, 'J-010', 'wrong', 2000);
   progress.customAnswers['J-010'] = ['My own answer.'];
+  progress.review = { 'E-001': { stage: 3, due: '2026-11-15' }, 'J-010': { stage: 0, due: '2026-11-09' } };
+  progress.days = { '2026-11-07': 4, '2026-11-08': 2 };
   return progress;
 }
 
@@ -91,12 +93,44 @@ describe('書き換えられたファイル', () => {
   });
 });
 
+describe('習熟度と学習した日', () => {
+  it('習熟度と学習した日も書き出して戻せる', () => {
+    const { progress } = readBackup(createBackup(sampleProgress()));
+    assert.deepEqual(progress.review, sampleProgress().review);
+    assert.deepEqual(progress.days, sampleProgress().days);
+  });
+
+  it('壊れた習熟度は除く', () => {
+    const { progress } = readBackup(fileWith({
+      review: {
+        good: { stage: 2, due: '2026-11-10' },
+        tooHigh: { stage: 9, due: '2026-11-10' },
+        noDue: { stage: 1 },
+        badDue: { stage: 1, due: 'tomorrow' },
+        broken: 3,
+      },
+    }));
+    assert.deepEqual(progress.review, { good: { stage: 2, due: '2026-11-10' } });
+  });
+
+  it('壊れた学習日は除く', () => {
+    const { progress } = readBackup(fileWith({ days: { '2026-11-08': 3, '2026-11-09': 0, yesterday: 2, '2026-11-10': 'many' } }));
+    assert.deepEqual(progress.days, { '2026-11-08': 3 });
+  });
+});
+
 describe('記録の要約', () => {
-  it('回答数、記録のある問題数、追加した正解例の数を数える', () => {
-    assert.deepEqual(summarizeProgress(sampleProgress()), { attempts: 2, questions: 2, customAnswers: 1 });
+  it('回答数、記録のある問題数、マスター数、学習した日数、追加した正解例の数を数える', () => {
+    assert.deepEqual(
+      summarizeProgress(sampleProgress()),
+      { attempts: 2, questions: 2, mastered: 1, days: 2, customAnswers: 1 },
+    );
   });
 
   it('収録中の問題だけを数えられる', () => {
-    assert.deepEqual(summarizeProgress(sampleProgress(), new Set(['E-001'])), { attempts: 1, questions: 1, customAnswers: 1 });
+    assert.deepEqual(
+      summarizeProgress(sampleProgress(), new Set(['J-010'])),
+      { attempts: 1, questions: 1, mastered: 0, days: 2, customAnswers: 1 },
+    );
   });
 });

@@ -425,6 +425,193 @@ input:focus-visible {
   margin-top: auto;
 }
 
+/* 今日の復習 */
+.review-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.review-card.has-due {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.review-text {
+  display: flex;
+  flex: 1 1 12em;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.review-text h2 {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.review-card.has-due .review-text p {
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.review-card > button {
+  width: auto;
+  min-width: 7.5em;
+  flex: 0 0 auto;
+}
+
+/* 文法マップ */
+.map {
+  gap: 20px;
+}
+
+.map-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.map-intro h1 {
+  font-size: 1.4rem;
+}
+
+.map-intro p,
+.map-level-head p {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.map-level {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.map-level-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.map-level-head h2 {
+  font-size: 1.15rem;
+}
+
+.legend {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.map-grid {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 8px;
+  list-style: none;
+}
+
+.map-grid li {
+  display: flex;
+}
+
+.map-item {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 84px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  text-align: left;
+}
+
+.map-item.is-complete {
+  border-color: var(--good);
+  background: var(--good-soft);
+}
+
+.map-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.map-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dots {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: var(--surface);
+}
+
+.dot-learning {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.dot-growing {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.dot-mastered {
+  border-color: var(--good);
+  background: var(--good);
+}
+
+.map-done {
+  color: var(--good);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.summary-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--good-soft);
+}
+
 /* 音声入力の説明 */
 .notice-screen {
   justify-content: center;

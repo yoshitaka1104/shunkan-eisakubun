@@ -1,6 +1,6 @@
 /**
  * 画面の表示と学習の流れを担当する。
- * 判定は judge.js、記録は progress.js、音声は speech.js に任せる。
+ * 判定は judge.js、記録は progress.js、習熟度と復習は review.js、音声は speech.js に任せる。
  */
 import { BackupError, backupFileName, createBackup, readBackup, summarizeProgress } from './backup.js';
 import { diagnostics, isIOS, logEvent } from './diagnostics.js';
@@ -14,6 +14,17 @@ import {
   totals,
   weakQuestionIds,
 } from './progress.js';
+import {
+  daysBetween,
+  dueQuestionIds,
+  grammarMap,
+  localDate,
+  MASTERY_LABELS,
+  masterySummary,
+  nextReview,
+  recordAsCorrectInstead,
+  recordReview,
+} from './review.js';
 import {
   createRecognizer,
   isRecognitionSupported,
@@ -31,7 +42,8 @@ import {
   saveProgress,
 } from './storage.js?v=1.6';
 
-const APP_VERSION = 'v1.6';
+
+const APP_VERSION = 'v1.7';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const LEVEL_NAMES = { 1: '小学校', 2: '中学校', 3: '高校' };
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
@@ -77,6 +89,8 @@ let advanceTimer = null;
 let toastTimer = null;
 /** 「記録の保存」画面で、読み込む前に確認している記録と、読み込めなかった理由。 */
 let backupState = { pending: null, error: '' };
+/** 文法マップで表示しているレベル。最初に開いたときに、完成していない項目のあるレベルを選ぶ。 */
+let mapLevel = null;
 
 function escapeHtml(value) {
   const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -109,9 +123,40 @@ function segmented(action, options, selected, label) {
   return `<div class="segmented" role="group" aria-label="${escapeHtml(label)}">${buttons}</div>`;
 }
 
+/** 復習の予定日を「今日」「明日」「11月10日」のように表す。 */
+function formatDay(day, today) {
+  const diff = daysBetween(today, day);
+  if (diff <= 0) return '今日';
+  if (diff === 1) return '明日';
+  const [, month, date] = day.split('-').map(Number);
+  return `${month}月${date}日`;
+}
+
+function todaysReviewIds() {
+  return dueQuestionIds(progress, localDate(), knownQuestionIds());
+}
+
+function reviewCard() {
+  const today = localDate();
+  const due = todaysReviewIds().length;
+  const next = nextReview(progress, today, knownQuestionIds());
+  let detail = '答えた問題が、間隔をあけてここに出ます。';
+  if (due > 0) detail = `${due}問`;
+  else if (next) detail = `今日の分は終わりました。次は${formatDay(next.day, today)}に${next.count}問です。`;
+  return `
+    <section class="review-card${due > 0 ? ' has-due' : ''}">
+      <div class="review-text">
+        <h2>今日の復習</h2>
+        <p>${detail}</p>
+      </div>
+      <button type="button" class="${due > 0 ? 'primary' : 'secondary'}" data-action="start-review" ${due > 0 ? '' : 'disabled'}>復習する</button>
+    </section>`;
+}
+
 function renderHome() {
   const { attempts, rate } = totals(progress, knownQuestionIds());
   const weakCount = knownWeakIds().length;
+  const mastery = masterySummary(questions, progress);
   const levels = LEVEL_OPTIONS.map((value) => ({ value, text: value === 'all' ? 'すべて' : LEVEL_NAMES[value] }));
   const counts = COUNT_OPTIONS.map((value) => ({ value, text: value === 'all' ? '全問' : `${value}問` }));
   const limits = TIME_LIMIT_OPTIONS.map((value) => ({ value, text: value === 0 ? 'なし' : `${value}秒` }));
@@ -126,8 +171,10 @@ function renderHome() {
       <dl class="stats">
         <div><dt>回答数</dt><dd>${attempts}</dd></div>
         <div><dt>正解率</dt><dd>${rate}<small>%</small></dd></div>
-        <div><dt>苦手な問題</dt><dd>${weakCount}</dd></div>
+        <div><dt>マスター</dt><dd>${mastery.mastered}<small>/${mastery.total}</small></dd></div>
       </dl>
+
+      ${reviewCard()}
 
       <section class="field">
         <h2>レベル</h2>
@@ -147,6 +194,7 @@ function renderHome() {
         <button type="button" class="secondary" data-action="start-weak" ${weakCount === 0 ? 'disabled' : ''}>
           苦手な問題を出題 (${weakCount}問)
         </button>
+        <button type="button" class="secondary" data-action="show-map">文法マップ</button>
       </div>
       ${isRecognitionSupported() ? '' : `<p class="notice">${UNSUPPORTED_MESSAGE}</p>`}
       ${shouldShowHomeScreenTip() ? HOME_SCREEN_TIP : ''}
@@ -202,7 +250,7 @@ function confirmPanel() {
   return `
     <div class="confirm" role="group" aria-label="読み込む記録の確認">
       <p>${when}</p>
-      <p>回答${next.attempts}回、${next.questions}問、追加した正解例${next.customAnswers}文</p>
+      <p>回答${next.attempts}回、${next.questions}問、マスター${next.mastered}問、学習した日${next.days}日、追加した正解例${next.customAnswers}文</p>
       <p>今の記録(回答${current.attempts}回)を、この内容で置き換えます。</p>
       ${warning}
       <div class="actions">
@@ -398,6 +446,9 @@ async function startSession(picked) {
     queue: picked,
     index: 0,
     firstResults: new Map(),
+    /** 習熟度を記録する前の状態。「正解にする」で付け替えるときに使う。 */
+    reviewBefore: new Map(),
+    newlyMastered: new Set(),
     voiceAvailable,
     preferTyping: !voiceAvailable,
     blockingFailures: 0,
@@ -548,7 +599,10 @@ function submitAnswer(candidates) {
   if (!session.firstResults.has(question.id)) {
     session.firstResults.set(question.id, verdict.result);
     recordResult(progress, question.id, verdict.result);
+    const change = recordReview(progress, question.id, verdict.result, localDate());
+    session.reviewBefore.set(question.id, change.before);
     saveProgress(progress);
+    if (change.mastered) announceMastered(question.id);
   }
   session.verdict = verdict;
   if (verdict.result === 'correct') {
@@ -564,14 +618,25 @@ function submitAnswer(candidates) {
   speak(verdict.modelText);
 }
 
+function announceMastered(id) {
+  session.newlyMastered.add(id);
+  const { mastered, total } = masterySummary(questions, progress);
+  showToast(`マスターしました(${mastered}/${total}問)`);
+}
+
 /** 自分の回答を正解例に加え、この問題を正解として記録し直す。 */
 function acceptAnswer() {
   const question = currentQuestion();
   addCustomAnswer(progress, question.id, session.verdict.answerText);
+  const wasCorrect = session.firstResults.get(question.id) === 'correct';
   reclassifyAsCorrect(progress, question.id, session.firstResults.get(question.id));
   session.firstResults.set(question.id, 'correct');
+  const change = wasCorrect
+    ? null
+    : recordAsCorrectInstead(progress, question.id, session.reviewBefore.get(question.id), localDate());
   saveProgress(progress);
-  showToast('正解例に追加しました');
+  if (change?.mastered) announceMastered(question.id);
+  else showToast('正解例に追加しました');
   nextQuestion();
 }
 
@@ -722,12 +787,83 @@ function renderSummary() {
         <div><dt>惜しい</dt><dd>${count('close')}</dd></div>
         <div><dt>不正解</dt><dd>${count('wrong')}</dd></div>
       </dl>
+      ${summaryNotes()}
       ${missed.length > 0 ? `<section><h2>今回の苦手な問題</h2><ol class="missed">${missedItems}</ol></section>` : ''}
       <div class="home-actions">
         ${missed.length > 0 ? '<button type="button" class="primary" data-action="retry-missed">間違えた問題をもう一度</button>' : ''}
         <button type="button" class="${missed.length > 0 ? 'secondary' : 'primary'}" data-action="go-home">ホームへ</button>
+        <button type="button" class="secondary" data-action="show-map">文法マップを見る</button>
       </div>
     </main>`;
+  window.scrollTo(0, 0);
+}
+
+/** 結果の画面で、マスターした問題と、残っている今日の復習を知らせる。 */
+function summaryNotes() {
+  const notes = [];
+  if (session.newlyMastered.size > 0) notes.push(`この回でマスターした問題: ${session.newlyMastered.size}問`);
+  const due = todaysReviewIds().length;
+  if (due > 0) notes.push(`今日の復習が、あと${due}問あります。`);
+  return notes.length ? `<div class="summary-notes">${notes.map((note) => `<p>${note}</p>`).join('')}</div>` : '';
+}
+
+const LEVEL_KEYS = { 1: 'elementary', 2: 'junior', 3: 'high' };
+
+function mapItemHtml(level, item) {
+  const mastered = item.questions.filter(({ state }) => state === 'mastered').length;
+  const dots = item.questions
+    .map(({ state }) => `<span class="dot dot-${state}" title="${MASTERY_LABELS[state]}"></span>`)
+    .join('');
+  const label = `${item.pattern}、${item.questions.length}問中${mastered}問マスター${item.complete ? '、完成' : ''}。押すと練習します`;
+  return `
+    <li>
+      <button type="button" class="map-item${item.complete ? ' is-complete' : ''}" data-action="practice-pattern"
+        data-level="${level}" data-pattern="${escapeHtml(item.pattern)}" aria-label="${escapeHtml(label)}">
+        <span class="map-name">${escapeHtml(item.pattern)}</span>
+        <span class="map-foot">
+          <span class="dots" aria-hidden="true">${dots}</span>
+          ${item.complete ? '<span class="map-done">完成</span>' : ''}
+        </span>
+      </button>
+    </li>`;
+}
+
+function renderMap() {
+  const map = grammarMap(questions, progress);
+  const summary = masterySummary(questions, progress);
+  mapLevel ??= (map.find(({ items }) => items.some((item) => !item.complete)) ?? map[0]).level;
+  const current = map.find(({ level }) => level === mapLevel);
+  const complete = current.items.filter((item) => item.complete).length;
+  const levels = map.map(({ level }) => ({ value: level, text: LEVEL_NAMES[level] }));
+  const legend = Object.entries(MASTERY_LABELS)
+    .map(([state, label]) => `<li><span class="dot dot-${state}" aria-hidden="true"></span>${label}</li>`)
+    .join('');
+  root.innerHTML = `
+    <main class="screen map">
+      <header class="sub-head">
+        <button type="button" class="text-button" data-action="go-home">戻る</button>
+      </header>
+      <div class="map-intro">
+        <h1>文法マップ</h1>
+        <p>マスター ${summary.mastered}/${summary.total}問、完成した項目 ${summary.completeItems}/${summary.totalItems}</p>
+      </div>
+      ${segmented('set-map-level', levels, mapLevel, 'レベル')}
+      <section class="map-level" id="${LEVEL_KEYS[mapLevel]}">
+        <div class="map-level-head">
+          <h2>${LEVEL_NAMES[mapLevel]}</h2>
+          <p>${current.items.length}項目中 ${complete}項目完成</p>
+        </div>
+        <ul class="legend" aria-label="色の意味">${legend}</ul>
+        <p class="hint">予定日に3回続けて正解するとマスターです。項目を押すと、その3問を練習できます。</p>
+        <ul class="map-grid">${current.items.map((item) => mapItemHtml(mapLevel, item)).join('')}</ul>
+      </section>
+    </main>`;
+}
+
+function openMap() {
+  cancelPendingWork();
+  session = null;
+  renderMap();
   window.scrollTo(0, 0);
 }
 
@@ -753,6 +889,18 @@ const ACTIONS = {
   },
   start: () => requestStart(pickQuestions(questions, filters)),
   'start-weak': () => requestStart(pickQuestions(questions, { ids: knownWeakIds() })),
+  'start-review': () => requestStart(pickQuestions(questions, { ids: todaysReviewIds(), count: filters.count })),
+  'show-map': openMap,
+  'set-map-level': ({ value }) => {
+    mapLevel = Number(value);
+    renderMap();
+  },
+  'practice-pattern': ({ level, pattern }) => {
+    const ids = questions
+      .filter((question) => question.level === Number(level) && question.pattern === pattern)
+      .map((question) => question.id);
+    requestStart(pickQuestions(questions, { ids }));
+  },
   'accept-notice': () => {
     progress.speechNoticeSeen = true;
     saveProgress(progress);

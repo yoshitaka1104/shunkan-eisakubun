@@ -11,6 +11,8 @@ const RESULTS = ['correct', 'close', 'wrong'];
 const MAX_CUSTOM_ANSWERS = 20;
 const MAX_ANSWER_LENGTH = 200;
 const MAX_TIME_LIMIT_SEC = 60;
+const MAX_STAGE = 5;
+const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export class BackupError extends Error {}
 
@@ -70,6 +72,27 @@ function readCustomAnswers(source) {
   return customAnswers;
 }
 
+function readReview(source) {
+  if (!isPlainObject(source)) return {};
+  const review = {};
+  for (const [id, entry] of Object.entries(source)) {
+    if (!isPlainObject(entry)) continue;
+    if (!Number.isInteger(entry.stage) || entry.stage < 0 || entry.stage > MAX_STAGE) continue;
+    if (typeof entry.due !== 'string' || !DAY_PATTERN.test(entry.due)) continue;
+    review[id] = { stage: entry.stage, due: entry.due };
+  }
+  return review;
+}
+
+function readDays(source) {
+  if (!isPlainObject(source)) return {};
+  const days = {};
+  for (const [day, answered] of Object.entries(source)) {
+    if (DAY_PATTERN.test(day) && Number.isInteger(answered) && answered > 0) days[day] = answered;
+  }
+  return days;
+}
+
 function readSettings(source, defaults) {
   const limit = source?.timeLimitSec;
   const valid = Number.isInteger(limit) && limit >= 0 && limit <= MAX_TIME_LIMIT_SEC;
@@ -110,6 +133,8 @@ export function readBackup(text) {
       stats: readStats(source.stats),
       customAnswers: readCustomAnswers(source.customAnswers),
       lastBackupAt: readDate(source.lastBackupAt)?.toISOString() ?? null,
+      review: readReview(source.review),
+      days: readDays(source.days),
     },
     exportedAt: readDate(data.exportedAt),
   };
@@ -118,9 +143,12 @@ export function readBackup(text) {
 /** 読み込む前に見せる、記録の中身の要約。 */
 export function summarizeProgress(progress, knownIds = null) {
   const entries = Object.entries(progress.stats).filter(([id]) => !knownIds || knownIds.has(id));
+  const review = Object.entries(progress.review ?? {}).filter(([id]) => !knownIds || knownIds.has(id));
   return {
     attempts: entries.reduce((sum, [, stat]) => sum + stat.attempts, 0),
     questions: entries.length,
+    mastered: review.filter(([, entry]) => entry.stage >= 3).length,
+    days: Object.keys(progress.days ?? {}).length,
     customAnswers: Object.values(progress.customAnswers).reduce((sum, answers) => sum + answers.length, 0),
   };
 }
