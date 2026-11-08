@@ -1,8 +1,10 @@
 /**
  * 画面の表示と学習の流れを担当する。
- * 判定は judge.js、記録は progress.js、習熟度と復習は review.js、音声は speech.js に任せる。
+ * 判定は judge.js、記録は progress.js、習熟度と復習は review.js、連続学習日数は streak.js、
+ * 実績は achievements.js、音声は speech.js に任せる。
  */
-import { BackupError, backupFileName, createBackup, readBackup, summarizeProgress } from './backup.js';
+import { ACHIEVEMENTS, achievementProgress, earnedCount, unlockAchievements } from './achievements.js';
+import { BackupError, backupFileName, createBackup, readBackup, summarizeProgress } from './backup.js?v=1.8';
 import { diagnostics, isIOS, logEvent } from './diagnostics.js';
 import { judge } from './judge.js?v=1.5';
 import {
@@ -41,9 +43,10 @@ import {
   requestPersistentStorage,
   saveProgress,
 } from './storage.js?v=1.6';
+import { busiestDay, recentDays, studyStreak } from './streak.js';
 
 
-const APP_VERSION = 'v1.7';
+const APP_VERSION = 'v1.8';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const LEVEL_NAMES = { 1: '小学校', 2: '中学校', 3: '高校' };
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
@@ -79,6 +82,10 @@ const root = document.querySelector('#app');
 const toast = document.querySelector('#toast');
 
 const progress = loadProgress();
+// 古い版で保存した記録や、公開直後に古いファイルが混ざった場合でも、新しい記録欄を使えるようにする。
+progress.review ??= {};
+progress.days ??= {};
+progress.achievements ??= {};
 const filters = { level: 'all', count: 10 };
 let questions = [];
 let session = null;
@@ -97,13 +104,23 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (character) => entities[character]);
 }
 
-function showToast(text) {
-  toast.textContent = text;
+const toastQueue = [];
+
+function displayNextToast() {
+  toast.textContent = toastQueue[0];
   toast.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
-    toast.hidden = true;
+    toastQueue.shift();
+    if (toastQueue.length > 0) displayNextToast();
+    else toast.hidden = true;
   }, TOAST_MS);
+}
+
+/** 短い知らせを出す。前の知らせが出ている間は、順番を待つ。 */
+function showToast(text) {
+  toastQueue.push(text);
+  if (toastQueue.length === 1) displayNextToast();
 }
 
 function knownQuestionIds() {
@@ -153,7 +170,65 @@ function reviewCard() {
     </section>`;
 }
 
+function streakCard() {
+  const today = localDate();
+  const { current, best, studiedToday } = studyStreak(progress.days, today);
+  let message = '今日の学習を記録しました。';
+  if (current === 0) message = '今日学習すると、1日目になります。';
+  else if (!studiedToday) message = `今日学習すると${current + 1}日になります。`;
+  const week = recentDays(progress.days, today)
+    .map(({ weekday, studied, isToday }) => `
+      <li class="${studied ? 'is-studied' : ''}${isToday ? ' is-today' : ''}">
+        <span class="visually-hidden">${isToday ? '今日' : `${weekday}曜日`}は${studied ? '学習した' : '学習していない'}</span>
+        <span aria-hidden="true">${weekday}</span>
+      </li>`)
+    .join('');
+  return `
+    <section class="streak-card" aria-label="連続学習">
+      <div class="streak-text">
+        <p class="streak-count"><strong>${current}</strong>日連続</p>
+        <p class="streak-detail">最長 ${best}日。${message}</p>
+      </div>
+      <ol class="week">${week}</ol>
+    </section>`;
+}
+
+/** 実績の判定に使う数字をまとめる。flags は1回の学習の結果で決まる実績の条件。 */
+function achievementStats({ perfectSession = false, reviewFinished = false } = {}) {
+  const known = knownQuestionIds();
+  const { attempts, correct } = totals(progress, known);
+  const map = grammarMap(questions, progress);
+  const summary = masterySummary(questions, progress);
+  const levels = Object.fromEntries(map.map(({ level, items }) => [
+    level,
+    [items.filter((item) => item.complete).length, items.length],
+  ]));
+  return {
+    attempts,
+    correct,
+    mastered: summary.mastered,
+    completeItems: summary.completeItems,
+    totalItems: summary.totalItems,
+    levels,
+    bestStreak: studyStreak(progress.days, localDate()).best,
+    busiestDay: busiestDay(progress.days),
+    perfectSession,
+    reviewFinished,
+  };
+}
+
+/** 新しく条件を満たした実績を記録して知らせる。 */
+function checkAchievements(flags) {
+  const unlocked = unlockAchievements(progress, achievementStats(flags), localDate());
+  if (unlocked.length === 0) return;
+  saveProgress(progress);
+  session?.newAchievements?.push(...unlocked);
+  showToast(unlocked.length === 1 ? `実績を獲得: ${unlocked[0].name}` : `実績を${unlocked.length}個獲得しました`);
+}
+
 function renderHome() {
+  // これまでの記録だけで条件を満たした実績も、ここで獲得する。
+  checkAchievements();
   const { attempts, rate } = totals(progress, knownQuestionIds());
   const weakCount = knownWeakIds().length;
   const mastery = masterySummary(questions, progress);
@@ -174,6 +249,7 @@ function renderHome() {
         <div><dt>マスター</dt><dd>${mastery.mastered}<small>/${mastery.total}</small></dd></div>
       </dl>
 
+      ${streakCard()}
       ${reviewCard()}
 
       <section class="field">
@@ -194,7 +270,10 @@ function renderHome() {
         <button type="button" class="secondary" data-action="start-weak" ${weakCount === 0 ? 'disabled' : ''}>
           苦手な問題を出題 (${weakCount}問)
         </button>
+      </div>
+      <div class="home-links">
         <button type="button" class="secondary" data-action="show-map">文法マップ</button>
+        <button type="button" class="secondary" data-action="show-achievements">実績 ${earnedCount(progress)}/${ACHIEVEMENTS.length}</button>
       </div>
       ${isRecognitionSupported() ? '' : `<p class="notice">${UNSUPPORTED_MESSAGE}</p>`}
       ${shouldShowHomeScreenTip() ? HOME_SCREEN_TIP : ''}
@@ -250,7 +329,7 @@ function confirmPanel() {
   return `
     <div class="confirm" role="group" aria-label="読み込む記録の確認">
       <p>${when}</p>
-      <p>回答${next.attempts}回、${next.questions}問、マスター${next.mastered}問、学習した日${next.days}日、追加した正解例${next.customAnswers}文</p>
+      <p>回答${next.attempts}回、${next.questions}問、マスター${next.mastered}問、学習した日${next.days}日、実績${next.achievements}個、追加した正解例${next.customAnswers}文</p>
       <p>今の記録(回答${current.attempts}回)を、この内容で置き換えます。</p>
       ${warning}
       <div class="actions">
@@ -401,14 +480,14 @@ function renderSpeechNotice() {
     </main>`;
 }
 
-function requestStart(picked) {
+function requestStart(picked, mode = 'normal') {
   if (picked.length === 0) return;
   if (isRecognitionSupported() && !progress.speechNoticeSeen) {
-    session = { pending: picked };
+    session = { pending: picked, pendingMode: mode };
     renderSpeechNotice();
     return;
   }
-  startSession(picked);
+  startSession(picked, mode);
 }
 
 function renderPreparing() {
@@ -440,10 +519,13 @@ async function prepareVoice() {
   }
 }
 
-async function startSession(picked) {
+async function startSession(picked, mode = 'normal') {
   const voiceAvailable = isRecognitionSupported();
   session = {
     queue: picked,
+    /** normal、review(今日の復習)、weak(苦手な問題)、pattern(文法マップの項目)、missed(間違えた問題)。 */
+    mode,
+    newAchievements: [],
     index: 0,
     firstResults: new Map(),
     /** 習熟度を記録する前の状態。「正解にする」で付け替えるときに使う。 */
@@ -603,6 +685,7 @@ function submitAnswer(candidates) {
     session.reviewBefore.set(question.id, change.before);
     saveProgress(progress);
     if (change.mastered) announceMastered(question.id);
+    checkAchievements();
   }
   session.verdict = verdict;
   if (verdict.result === 'correct') {
@@ -637,6 +720,7 @@ function acceptAnswer() {
   saveProgress(progress);
   if (change?.mastered) announceMastered(question.id);
   else showToast('正解例に追加しました');
+  checkAchievements();
   nextQuestion();
 }
 
@@ -762,6 +846,11 @@ function renderQuiz() {
 }
 
 function renderSummary() {
+  const allCorrect = session.queue.every((question) => session.firstResults.get(question.id) === 'correct');
+  checkAchievements({
+    perfectSession: session.queue.length >= 10 && allCorrect,
+    reviewFinished: session.mode === 'review' && todaysReviewIds().length === 0,
+  });
   const results = session.queue.map((question) => ({
     question,
     result: session.firstResults.get(question.id) ?? 'wrong',
@@ -802,6 +891,7 @@ function renderSummary() {
 function summaryNotes() {
   const notes = [];
   if (session.newlyMastered.size > 0) notes.push(`この回でマスターした問題: ${session.newlyMastered.size}問`);
+  if (session.newAchievements.length > 0) notes.push(`獲得した実績: ${session.newAchievements.map(({ name }) => name).join('、')}`);
   const due = todaysReviewIds().length;
   if (due > 0) notes.push(`今日の復習が、あと${due}問あります。`);
   return notes.length ? `<div class="summary-notes">${notes.map((note) => `<p>${note}</p>`).join('')}</div>` : '';
@@ -860,6 +950,72 @@ function renderMap() {
     </main>`;
 }
 
+const BADGE_ICONS = {
+  start: '<path d="M8 5l11 7-11 7z"/>',
+  answers: '<path d="M4 5h16v10H9l-5 4z"/>',
+  streak: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  mastery: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+  complete: '<path d="M6 21V4M6 4h12l-2.5 4L18 12H6"/>',
+  day: '<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',
+  perfect: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+  review: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>',
+};
+
+function formatDate(day) {
+  const [year, month, date] = day.split('-').map(Number);
+  return `${year}年${month}月${date}日`;
+}
+
+function badgeHtml(achievement, stats) {
+  const earnedOn = progress.achievements[achievement.id];
+  const { current, target } = achievementProgress(achievement, stats);
+  let status;
+  let meter = '';
+  if (earnedOn) {
+    status = `${formatDate(earnedOn)}に獲得`;
+  } else if (achievement.once) {
+    status = 'まだ獲得していません';
+  } else {
+    status = `<span class="visually-hidden">進み具合 </span>${current}/${target}`;
+    meter = `<span class="meter" aria-hidden="true"><span style="width: ${Math.round((current / target) * 100)}%"></span></span>`;
+  }
+  return `
+    <li class="badge kind-${achievement.kind}${earnedOn ? ' is-earned' : ''}">
+      <span class="badge-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round">${BADGE_ICONS[achievement.kind]}</svg>
+      </span>
+      <div class="badge-text">
+        <p class="badge-name">${achievement.name}</p>
+        <p class="badge-desc">${achievement.description}</p>
+        <p class="badge-status">${status}</p>
+        ${meter}
+      </div>
+    </li>`;
+}
+
+function renderAchievements() {
+  const stats = achievementStats();
+  root.innerHTML = `
+    <main class="screen achievements">
+      <header class="sub-head">
+        <button type="button" class="text-button" data-action="go-home">戻る</button>
+      </header>
+      <div class="map-intro">
+        <h1>実績</h1>
+        <p>獲得 ${earnedCount(progress)}/${ACHIEVEMENTS.length}</p>
+      </div>
+      <ul class="badges">${ACHIEVEMENTS.map((achievement) => badgeHtml(achievement, stats)).join('')}</ul>
+    </main>`;
+}
+
+function openAchievements() {
+  cancelPendingWork();
+  session = null;
+  renderAchievements();
+  window.scrollTo(0, 0);
+}
+
 function openMap() {
   cancelPendingWork();
   session = null;
@@ -888,9 +1044,10 @@ const ACTIONS = {
     renderHome();
   },
   start: () => requestStart(pickQuestions(questions, filters)),
-  'start-weak': () => requestStart(pickQuestions(questions, { ids: knownWeakIds() })),
-  'start-review': () => requestStart(pickQuestions(questions, { ids: todaysReviewIds(), count: filters.count })),
+  'start-weak': () => requestStart(pickQuestions(questions, { ids: knownWeakIds() }), 'weak'),
+  'start-review': () => requestStart(pickQuestions(questions, { ids: todaysReviewIds(), count: filters.count }), 'review'),
   'show-map': openMap,
+  'show-achievements': openAchievements,
   'set-map-level': ({ value }) => {
     mapLevel = Number(value);
     renderMap();
@@ -899,12 +1056,12 @@ const ACTIONS = {
     const ids = questions
       .filter((question) => question.level === Number(level) && question.pattern === pattern)
       .map((question) => question.id);
-    requestStart(pickQuestions(questions, { ids }));
+    requestStart(pickQuestions(questions, { ids }), 'pattern');
   },
   'accept-notice': () => {
     progress.speechNoticeSeen = true;
     saveProgress(progress);
-    startSession(session.pending);
+    startSession(session.pending, session.pendingMode);
   },
   mic: startListening,
   'stop-mic': () => recognizer?.stop(),
@@ -933,7 +1090,7 @@ const ACTIONS = {
     const ids = session.queue
       .map((question) => question.id)
       .filter((id) => session.firstResults.get(id) !== 'correct');
-    startSession(pickQuestions(questions, { ids }));
+    startSession(pickQuestions(questions, { ids }), 'missed');
   },
   'go-home': goHome,
   quit: goHome,

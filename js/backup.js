@@ -93,6 +93,15 @@ function readDays(source) {
   return days;
 }
 
+function readAchievements(source) {
+  if (!isPlainObject(source)) return {};
+  const achievements = {};
+  for (const [id, day] of Object.entries(source)) {
+    if (/^[a-z0-9-]{1,40}$/.test(id) && typeof day === 'string' && DAY_PATTERN.test(day)) achievements[id] = day;
+  }
+  return achievements;
+}
+
 function readSettings(source, defaults) {
   const limit = source?.timeLimitSec;
   const valid = Number.isInteger(limit) && limit >= 0 && limit <= MAX_TIME_LIMIT_SEC;
@@ -135,6 +144,7 @@ export function readBackup(text) {
       lastBackupAt: readDate(source.lastBackupAt)?.toISOString() ?? null,
       review: readReview(source.review),
       days: readDays(source.days),
+      achievements: readAchievements(source.achievements),
     },
     exportedAt: readDate(data.exportedAt),
   };
@@ -149,6 +159,7 @@ export function summarizeProgress(progress, knownIds = null) {
     questions: entries.length,
     mastered: review.filter(([, entry]) => entry.stage >= 3).length,
     days: Object.keys(progress.days ?? {}).length,
+    achievements: Object.keys(progress.achievements ?? {}).length,
     customAnswers: Object.values(progress.customAnswers).reduce((sum, answers) => sum + answers.length, 0),
   };
 }

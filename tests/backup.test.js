@@ -18,6 +18,7 @@ function sampleProgress() {
   progress.customAnswers['J-010'] = ['My own answer.'];
   progress.review = { 'E-001': { stage: 3, due: '2026-11-15' }, 'J-010': { stage: 0, due: '2026-11-09' } };
   progress.days = { '2026-11-07': 4, '2026-11-08': 2 };
+  progress.achievements = { 'first-correct': '2026-11-07' };
   return progress;
 }
 
@@ -113,6 +114,15 @@ describe('習熟度と学習した日', () => {
     assert.deepEqual(progress.review, { good: { stage: 2, due: '2026-11-10' } });
   });
 
+  it('実績も書き出して戻せる', () => {
+    assert.deepEqual(readBackup(createBackup(sampleProgress())).progress.achievements, { 'first-correct': '2026-11-07' });
+  });
+
+  it('壊れた実績は除く', () => {
+    const { progress } = readBackup(fileWith({ achievements: { 'first-correct': '2026-11-07', 'bad id!': '2026-11-07', 'answers-50': 'today' } }));
+    assert.deepEqual(progress.achievements, { 'first-correct': '2026-11-07' });
+  });
+
   it('壊れた学習日は除く', () => {
     const { progress } = readBackup(fileWith({ days: { '2026-11-08': 3, '2026-11-09': 0, yesterday: 2, '2026-11-10': 'many' } }));
     assert.deepEqual(progress.days, { '2026-11-08': 3 });
@@ -123,14 +133,14 @@ describe('記録の要約', () => {
   it('回答数、記録のある問題数、マスター数、学習した日数、追加した正解例の数を数える', () => {
     assert.deepEqual(
       summarizeProgress(sampleProgress()),
-      { attempts: 2, questions: 2, mastered: 1, days: 2, customAnswers: 1 },
+      { attempts: 2, questions: 2, mastered: 1, days: 2, achievements: 1, customAnswers: 1 },
     );
   });
 
   it('収録中の問題だけを数えられる', () => {
     assert.deepEqual(
       summarizeProgress(sampleProgress(), new Set(['J-010'])),
-      { attempts: 1, questions: 1, mastered: 0, days: 2, customAnswers: 1 },
+      { attempts: 1, questions: 1, mastered: 0, days: 2, achievements: 1, customAnswers: 1 },
     );
   });
 });

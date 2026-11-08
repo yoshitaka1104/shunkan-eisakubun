@@ -425,6 +425,171 @@ input:focus-visible {
   margin-top: auto;
 }
 
+/* 連続学習 */
+.streak-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.streak-text {
+  display: flex;
+  flex: 1 1 11em;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.streak-count {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.streak-count strong {
+  margin-right: 2px;
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.streak-detail {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.week {
+  display: flex;
+  gap: 4px;
+  list-style: none;
+}
+
+.week li {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.week li.is-studied {
+  border-color: var(--good);
+  background: var(--good);
+  color: var(--surface);
+  font-weight: 700;
+}
+
+.week li.is-today {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.home-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* 実績 */
+.achievements {
+  gap: 20px;
+}
+
+.badges {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.badge {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.badge-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 2px dashed var(--line);
+  border-radius: 50%;
+}
+
+.badge.is-earned {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.badge.is-earned .badge-icon {
+  border: 0;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.badge-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.badge-name {
+  font-weight: 700;
+}
+
+.badge.is-earned .badge-name {
+  color: var(--ink);
+}
+
+.badge-desc,
+.badge-status {
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.badge-status {
+  font-variant-numeric: tabular-nums;
+}
+
+.badge.is-earned .badge-status {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.meter {
+  display: block;
+  height: 6px;
+  margin-top: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.meter span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
 /* 今日の復習 */
 .review-card {
   display: flex;

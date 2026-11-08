@@ -17,6 +17,8 @@ export function emptyProgress() {
     review: {},
     /** 学習した日ごとの回答数。キーは 'YYYY-MM-DD'。 */
     days: {},
+    /** 獲得した実績と、獲得した日(achievements.js)。 */
+    achievements: {},
   };
 }
 
