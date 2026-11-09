@@ -4,6 +4,7 @@
  * 読み込むファイルは手で書き換えられている可能性があるため、使える値だけを取り出す。
  */
 import { emptyProgress } from './progress.js';
+import { MAX_SPEED_MS } from './speed.js';
 
 const APP_ID = 'shunkan-eisakubun';
 const FORMAT_VERSION = 1;
@@ -102,6 +103,26 @@ function readAchievements(source) {
   return achievements;
 }
 
+function readSpeed(source) {
+  const speed = { days: {}, questions: {} };
+  if (!isPlainObject(source)) return speed;
+  if (isPlainObject(source.days)) {
+    for (const [day, value] of Object.entries(source.days)) {
+      if (!DAY_PATTERN.test(day) || !isPlainObject(value)) continue;
+      const { totalMs, count } = value;
+      if (!Number.isInteger(count) || count < 1 || !Number.isFinite(totalMs)) continue;
+      if (totalMs < 0 || totalMs > count * MAX_SPEED_MS) continue;
+      speed.days[day] = { totalMs, count };
+    }
+  }
+  if (isPlainObject(source.questions)) {
+    for (const [id, ms] of Object.entries(source.questions)) {
+      if (Number.isFinite(ms) && ms >= 0 && ms <= MAX_SPEED_MS) speed.questions[id] = ms;
+    }
+  }
+  return speed;
+}
+
 function readSettings(source, defaults) {
   const limit = source?.timeLimitSec;
   const valid = Number.isInteger(limit) && limit >= 0 && limit <= MAX_TIME_LIMIT_SEC;
@@ -145,6 +166,7 @@ export function readBackup(text) {
       review: readReview(source.review),
       days: readDays(source.days),
       achievements: readAchievements(source.achievements),
+      speed: readSpeed(source.speed),
     },
     exportedAt: readDate(data.exportedAt),
   };

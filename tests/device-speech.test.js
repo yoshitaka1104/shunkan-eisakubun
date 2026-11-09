@@ -87,9 +87,10 @@ function useMicrophone(getUserMedia = async () => makeStream()) {
 
 async function listen(getUserMedia) {
   useMicrophone(getUserMedia);
-  const calls = { ready: 0, processing: 0, interim: [], results: [], errors: [] };
+  const calls = { ready: 0, speechStart: [], processing: 0, interim: [], results: [], errors: [] };
   const recognizer = createDeviceRecognizer({
     onReady: () => { calls.ready += 1; },
+    onSpeechStart: (ms) => calls.speechStart.push(ms),
     onInterim: (text) => calls.interim.push(text),
     onProcessing: () => { calls.processing += 1; },
     onResult: (candidates) => calls.results.push(candidates),
@@ -399,6 +400,21 @@ describe('録音と文字への変換', () => {
     await settle();
     assert.deepEqual(calls.results, []);
     assert.equal(stream.track.stopped, true);
+  });
+
+  it('話し始めを、マイクが音を拾い始めてから話し始めるまでの時間で1回だけ知らせる', async () => {
+    const { recognizer, calls, context } = await listen();
+    emit(context, NOISE, 4);
+    emit(context, VOICE, 2);
+    // 物音と区別するため、大きな音が続くまでは話し始めとみなさない。
+    assert.deepEqual(calls.speechStart, []);
+    emit(context, VOICE, 1);
+    // 1回分は 50 ミリ秒。静かな4回の後に話し始めたので 200 ミリ秒。
+    assert.deepEqual(calls.speechStart, [200]);
+    emit(context, NOISE, 2);
+    emit(context, VOICE, 4);
+    assert.deepEqual(calls.speechStart, [200]);
+    recognizer.abort();
   });
 
   it('許可の確認中に打ち切ったら、後から開いたマイクも閉じる', async () => {

@@ -590,6 +590,94 @@ input:focus-visible {
   background: var(--accent);
 }
 
+/* 答えるまでの速さ */
+.speed-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.speed-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.speed-card h2 {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.speed-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.speed-value strong {
+  margin-right: 2px;
+  font-size: 1.6rem;
+}
+
+.speed-detail {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.speed-change.is-faster {
+  color: var(--good);
+  font-weight: 600;
+}
+
+.speed-trend {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  margin: 0;
+}
+
+.speed-trend svg {
+  display: block;
+  overflow: visible;
+}
+
+.speed-trend figcaption {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.spark-line {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.6;
+}
+
+.spark-end {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.spark-hit {
+  fill: transparent;
+}
+
+.speed-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
 /* 今日の復習 */
 .review-card {
   display: flex;

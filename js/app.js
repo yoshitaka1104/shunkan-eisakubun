@@ -1,7 +1,7 @@
 /**
  * 画面の表示と学習の流れを担当する。
  * 判定は judge.js、記録は progress.js、習熟度と復習は review.js、連続学習日数は streak.js、
- * 実績は achievements.js、音声は speech.js に任せる。
+ * 実績は achievements.js、答えるまでの速さは speed.js、音声は speech.js に任せる。
  */
 import { ACHIEVEMENTS, achievementProgress, earnedCount, unlockAchievements } from './achievements.js';
 import { BackupError, backupFileName, createBackup, readBackup, summarizeProgress } from './backup.js?v=1.8';
@@ -35,7 +35,8 @@ import {
   speak,
   stopSpeaking,
   unlockSpeech,
-} from './speech.js?v=1.4';
+} from './speech.js?v=1.9';
+import { answerTime, emptySpeed, formatSeconds, recordSpeed, speedChange, speedSummary } from './speed.js';
 import {
   isStandalone,
   isStoragePersisted,
@@ -46,7 +47,7 @@ import {
 import { busiestDay, recentDays, studyStreak } from './streak.js';
 
 
-const APP_VERSION = 'v1.8';
+const APP_VERSION = 'v1.9';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const LEVEL_NAMES = { 1: '小学校', 2: '中学校', 3: '高校' };
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
@@ -86,6 +87,7 @@ const progress = loadProgress();
 progress.review ??= {};
 progress.days ??= {};
 progress.achievements ??= {};
+progress.speed ??= emptySpeed();
 const filters = { level: 'all', count: 10 };
 let questions = [];
 let session = null;
@@ -193,6 +195,65 @@ function streakCard() {
     </section>`;
 }
 
+const SPARK = { width: 140, height: 44, pad: 6 };
+
+function formatMonthDay(day) {
+  const [, month, date] = day.split('-').map(Number);
+  return `${month}月${date}日`;
+}
+
+/** 日ごとの平均の推移。下がるほど速い。 */
+function sparkline(trend) {
+  const points = trend.map((item, index) => ({ ...item, index })).filter(({ ms }) => ms !== null);
+  if (points.length < 2) return '';
+  const values = points.map(({ ms }) => ms);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const x = (index) => SPARK.pad + (index * (SPARK.width - 2 * SPARK.pad)) / (trend.length - 1);
+  const y = (ms) => (max === min
+    ? SPARK.height / 2
+    : SPARK.pad + ((max - ms) / (max - min)) * (SPARK.height - 2 * SPARK.pad));
+  const path = points.map(({ index, ms }, order) => `${order ? 'L' : 'M'}${x(index).toFixed(1)} ${y(ms).toFixed(1)}`).join(' ');
+  const last = points.at(-1);
+  const label = ({ day, ms }) => `${formatMonthDay(day)} ${formatSeconds(ms)}秒`;
+  const hits = points
+    .map((point) => `<circle class="spark-hit" cx="${x(point.index).toFixed(1)}" cy="${y(point.ms).toFixed(1)}" r="8"><title>${label(point)}</title></circle>`)
+    .join('');
+  return `
+    <figure class="speed-trend">
+      <svg viewBox="0 0 ${SPARK.width} ${SPARK.height}" width="${SPARK.width}" height="${SPARK.height}" aria-hidden="true">
+        <path class="spark-line" d="${path}"/>
+        <circle class="spark-end" cx="${x(last.index).toFixed(1)}" cy="${y(last.ms).toFixed(1)}" r="4"/>
+        ${hits}
+      </svg>
+      <figcaption>14日の推移(下がるほど速い)</figcaption>
+      <ul class="visually-hidden">${points.map((point) => `<li>${label(point)}</li>`).join('')}</ul>
+    </figure>`;
+}
+
+function speedCard() {
+  const { recent, previous, trend } = speedSummary(progress.speed, localDate());
+  let body = '<p class="speed-detail">音声で答えて正解した問題で、問題が出てから話し始めるまでの時間を記録します。</p>';
+  if (recent === null && Object.keys(progress.speed.days).length > 0) {
+    body = '<p class="speed-detail">直近7日の記録はありません。</p>';
+  }
+  if (recent !== null) {
+    const change = speedChange(recent, previous);
+    // 推移の図は数字の横に置き、比べた結果の文は下の行に回す。
+    body = `
+      <div class="speed-main">
+        <p class="speed-value"><strong>${formatSeconds(recent)}</strong>秒</p>
+        ${sparkline(trend)}
+      </div>
+      <p class="speed-detail">直近7日の平均。${change ? `<span class="speed-change is-${change.direction}">${change.text}</span>` : ''}</p>`;
+  }
+  return `
+    <section class="speed-card" aria-label="答えるまでの速さ">
+      <h2>答えるまでの速さ</h2>
+      ${body}
+    </section>`;
+}
+
 /** 実績の判定に使う数字をまとめる。flags は1回の学習の結果で決まる実績の条件。 */
 function achievementStats({ perfectSession = false, reviewFinished = false } = {}) {
   const known = knownQuestionIds();
@@ -250,6 +311,7 @@ function renderHome() {
       </dl>
 
       ${streakCard()}
+      ${speedCard()}
       ${reviewCard()}
 
       <section class="field">
@@ -526,6 +588,14 @@ async function startSession(picked, mode = 'normal') {
     /** normal、review(今日の復習)、weak(苦手な問題)、pattern(文法マップの項目)、missed(間違えた問題)。 */
     mode,
     newAchievements: [],
+    /** 初回に話し始めるまでの時間。正解になったら記録する。 */
+    firstSpeeds: new Map(),
+    /** この回で記録した速さ。 */
+    speeds: [],
+    /** 直前に記録した速さ。正解の画面に出す。 */
+    lastSpeed: null,
+    /** 今の回答の時刻。 */
+    timing: null,
     index: 0,
     firstResults: new Map(),
     /** 習熟度を記録する前の状態。「正解にする」で付け替えるときに使う。 */
@@ -600,7 +670,10 @@ function beginAttempt() {
   session.timedOut = false;
   session.failureDetail = '';
   session.phase = session.preferTyping ? 'typing' : 'asking';
+  // 速さは初回の回答だけで測る。再挑戦に入ったら、初回の時間は使わない。
+  session.firstSpeeds.delete(currentQuestion().id);
   renderQuiz();
+  session.timing = { shownAt: performance.now(), pressedAt: null, speechAfterReadyMs: null, listens: 0 };
   startTimer();
 }
 
@@ -639,9 +712,15 @@ function startListening() {
   stopSpeaking();
   session.phase = 'listening';
   session.notice = '';
+  const { timing } = session;
+  timing.listens += 1;
+  timing.pressedAt ??= performance.now();
   renderQuiz();
   recognizer = createRecognizer({
     onReady: showMicReady,
+    onSpeechStart(msAfterReady) {
+      timing.speechAfterReadyMs ??= msAfterReady;
+    },
     onProcessing: showProcessing,
     onInterim(text) {
       const interim = root.querySelector('[data-interim]');
@@ -651,7 +730,7 @@ function startListening() {
       recognizer = null;
       session.blockingFailures = 0;
       session.preferTyping = false;
-      submitAnswer(candidates);
+      submitAnswer(candidates, { spoken: true });
     },
     onError(kind, code) {
       recognizer = null;
@@ -674,7 +753,21 @@ function handleRecognitionError(kind, code) {
   renderQuiz();
 }
 
-function submitAnswer(candidates) {
+/** 初回に話し始めるまでの時間を、正解した回答の速さとして記録する。 */
+function noteSpeed(id) {
+  const ms = session.firstSpeeds.get(id);
+  if (ms === undefined) return;
+  session.firstSpeeds.delete(id);
+  const previous = recordSpeed(progress, id, ms, localDate());
+  session.speeds.push(ms);
+  session.lastSpeed = { id, ms, previous };
+}
+
+/**
+ * @param {string[]} candidates
+ * @param {{ spoken?: boolean }} [options] spoken は音声で答えたとき true。速さは音声の回答だけ測る。
+ */
+function submitAnswer(candidates, { spoken = false } = {}) {
   stopTimer();
   const question = currentQuestion();
   const verdict = judge({ candidates, answers: answersFor(question, progress) });
@@ -683,6 +776,10 @@ function submitAnswer(candidates) {
     recordResult(progress, question.id, verdict.result);
     const change = recordReview(progress, question.id, verdict.result, localDate());
     session.reviewBefore.set(question.id, change.before);
+    // マイクを押し直した回答は、話し始めの時刻が混ざるので測らない。
+    const ms = spoken && session.timing.listens === 1 ? answerTime(session.timing) : null;
+    if (ms !== null) session.firstSpeeds.set(question.id, ms);
+    if (verdict.result === 'correct') noteSpeed(question.id);
     saveProgress(progress);
     if (change.mastered) announceMastered(question.id);
     checkAchievements();
@@ -717,6 +814,7 @@ function acceptAnswer() {
   const change = wasCorrect
     ? null
     : recordAsCorrectInstead(progress, question.id, session.reviewBefore.get(question.id), localDate());
+  if (!wasCorrect) noteSpeed(question.id);
   saveProgress(progress);
   if (change?.mastered) announceMastered(question.id);
   else showToast('正解例に追加しました');
@@ -777,10 +875,18 @@ function nextLabel() {
   return isLastQuestion() ? '結果を見る' : '次へ';
 }
 
+function speedNote() {
+  const speed = session.lastSpeed;
+  if (speed?.id !== currentQuestion().id) return '';
+  const previous = speed.previous === null ? '' : `(前回 ${formatSeconds(speed.previous)}秒)`;
+  return `<p class="speed-note">話し始めるまで ${formatSeconds(speed.ms)}秒${previous}</p>`;
+}
+
 function correctPanel() {
   return `
     <p class="verdict verdict-correct">${VERDICT_LABELS.correct}</p>
     <p class="model-answer" lang="en">${escapeHtml(session.verdict.modelText)}</p>
+    ${speedNote()}
     <button type="button" class="primary" data-action="next">${nextLabel()}</button>`;
 }
 
@@ -890,6 +996,10 @@ function renderSummary() {
 /** 結果の画面で、マスターした問題と、残っている今日の復習を知らせる。 */
 function summaryNotes() {
   const notes = [];
+  if (session.speeds.length > 0) {
+    const average = session.speeds.reduce((sum, ms) => sum + ms, 0) / session.speeds.length;
+    notes.push(`話し始めるまでの平均: ${formatSeconds(average)}秒(${session.speeds.length}問)`);
+  }
   if (session.newlyMastered.size > 0) notes.push(`この回でマスターした問題: ${session.newlyMastered.size}問`);
   if (session.newAchievements.length > 0) notes.push(`獲得した実績: ${session.newAchievements.map(({ name }) => name).join('、')}`);
   const due = todaysReviewIds().length;

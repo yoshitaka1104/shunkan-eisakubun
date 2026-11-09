@@ -6,7 +6,7 @@
  * iPhone と iPad は標準の音声認識が続けて動かないため、device-speech.js で端末の中で変換する。
  */
 import { audioFileFor, SILENCE_FILE } from './audio-files.js';
-import { createDeviceRecognizer, isDeviceSpeechSupported, prepareDeviceSpeech } from './device-speech.js?v=1.3.1';
+import { createDeviceRecognizer, isDeviceSpeechSupported, prepareDeviceSpeech } from './device-speech.js?v=1.9';
 import { isIOS, logEvent } from './diagnostics.js';
 
 const LANGUAGE = 'en-US';
@@ -61,7 +61,7 @@ function abortQuietly(recognition) {
 }
 
 /** ブラウザの音声認識で、1回分の認識を作る。 */
-function createBrowserRecognizer({ onReady = () => {}, onInterim, onResult, onError }) {
+function createBrowserRecognizer({ onReady = () => {}, onSpeechStart = () => {}, onInterim, onResult, onError }) {
   // 前回の認識が残っていると、次の開始に失敗することがある。
   if (activeRecognition) abortQuietly(activeRecognition);
 
@@ -81,6 +81,8 @@ function createBrowserRecognizer({ onReady = () => {}, onInterim, onResult, onEr
   let stopping = false;
   let ended = false;
   let readyAnnounced = false;
+  let readyAt = null;
+  let speechAnnounced = false;
   let interim = '';
   let watchdog = null;
   let afterRelease = null;
@@ -133,6 +135,7 @@ function createBrowserRecognizer({ onReady = () => {}, onInterim, onResult, onEr
   const announceReady = () => {
     if (settled || readyAnnounced) return;
     readyAnnounced = true;
+    readyAt = performance.now();
     onReady();
   };
 
@@ -157,7 +160,13 @@ function createBrowserRecognizer({ onReady = () => {}, onInterim, onResult, onEr
     if (!settled) arm(FIRST_RESULT_TIMEOUT_MS, timeOut);
     announceReady();
   };
-  recognition.onspeechstart = () => note('speechstart');
+  recognition.onspeechstart = () => {
+    note('speechstart');
+    if (settled || speechAnnounced) return;
+    speechAnnounced = true;
+    announceReady();
+    onSpeechStart(performance.now() - readyAt);
+  };
   recognition.onspeechend = () => note('speechend');
   recognition.onaudioend = () => note('audioend');
 
@@ -221,6 +230,8 @@ function createBrowserRecognizer({ onReady = () => {}, onInterim, onResult, onEr
  *
  * @param {object} handlers
  * @param {() => void} [handlers.onReady] マイクが音を拾い始めたとき。
+ * @param {(msAfterReady: number) => void} [handlers.onSpeechStart] 話し始めたとき。onReady から話し始めるまでの時間を渡す。
+ *   ブラウザによっては届かない。
  * @param {(text: string) => void} [handlers.onInterim] 認識途中の英文。後から変わることがある。
  * @param {() => void} [handlers.onProcessing] 録音を終え、文字への変換を始めたとき。届かない端末もある。
  * @param {(candidates: string[]) => void} handlers.onResult 認識候補。確度の高い順。

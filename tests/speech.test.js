@@ -98,9 +98,10 @@ class FakeSynthesis {
 const openRecognizers = [];
 
 function listen() {
-  const calls = { ready: 0, interim: [], results: [], errors: [] };
+  const calls = { ready: 0, speechStart: [], interim: [], results: [], errors: [] };
   const recognizer = createRecognizer({
     onReady: () => { calls.ready += 1; },
+    onSpeechStart: (ms) => calls.speechStart.push(ms),
     onInterim: (text) => calls.interim.push(text),
     onResult: (candidates) => calls.results.push(candidates),
     onError: (kind, code) => calls.errors.push({ kind, code }),
@@ -221,7 +222,7 @@ describe('音声認識の基本', () => {
     recognizer.abort();
     recognition.onend();
     assert.equal(recognition.aborted, 1);
-    assert.deepEqual(calls, { ready: 0, interim: [], results: [], errors: [] });
+    assert.deepEqual(calls, { ready: 0, speechStart: [], interim: [], results: [], errors: [] });
   });
 });
 
@@ -252,6 +253,31 @@ describe('マイクの準備', () => {
     recognizer.abort();
     recognition.onaudiostart();
     assert.equal(calls.ready, 0);
+  });
+
+  it('話し始めたら、マイクが動き始めてからの時間を1回だけ知らせる', () => {
+    const { calls, recognition } = listen();
+    recognition.onstart();
+    recognition.onaudiostart();
+    recognition.onspeechstart();
+    recognition.onspeechstart();
+    assert.equal(calls.speechStart.length, 1);
+    assert.ok(calls.speechStart[0] >= 0 && calls.speechStart[0] < 1000, String(calls.speechStart[0]));
+  });
+
+  it('マイクの開始より先に話し始めの通知が届いたら、ほぼ 0 として知らせる', () => {
+    const { calls, recognition } = listen();
+    recognition.onspeechstart();
+    assert.equal(calls.ready, 1);
+    assert.ok(calls.speechStart[0] >= 0 && calls.speechStart[0] < 50, String(calls.speechStart[0]));
+  });
+
+  it('打ち切った後は話し始めを知らせない', () => {
+    const { recognizer, calls, recognition } = listen();
+    recognition.onaudiostart();
+    recognizer.abort();
+    recognition.onspeechstart();
+    assert.deepEqual(calls.speechStart, []);
   });
 
   it('マイクの準備に時間がかかっても、話す時間を削らない', () => {

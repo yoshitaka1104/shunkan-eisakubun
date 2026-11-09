@@ -19,6 +19,7 @@ function sampleProgress() {
   progress.review = { 'E-001': { stage: 3, due: '2026-11-15' }, 'J-010': { stage: 0, due: '2026-11-09' } };
   progress.days = { '2026-11-07': 4, '2026-11-08': 2 };
   progress.achievements = { 'first-correct': '2026-11-07' };
+  progress.speed = { days: { '2026-11-08': { totalMs: 4200, count: 2 } }, questions: { 'E-001': 1800 } };
   return progress;
 }
 
@@ -121,6 +122,26 @@ describe('習熟度と学習した日', () => {
   it('壊れた実績は除く', () => {
     const { progress } = readBackup(fileWith({ achievements: { 'first-correct': '2026-11-07', 'bad id!': '2026-11-07', 'answers-50': 'today' } }));
     assert.deepEqual(progress.achievements, { 'first-correct': '2026-11-07' });
+  });
+
+  it('速さも書き出して戻せる', () => {
+    assert.deepEqual(readBackup(createBackup(sampleProgress())).progress.speed, sampleProgress().speed);
+  });
+
+  it('壊れた速さは除く', () => {
+    const { progress } = readBackup(fileWith({
+      speed: {
+        days: {
+          '2026-11-08': { totalMs: 4200, count: 2 },
+          '2026-11-09': { totalMs: 50_000, count: 1 },
+          '2026-11-10': { totalMs: 1000, count: 0 },
+          '2026-11-11': { totalMs: 'fast', count: 1 },
+          yesterday: { totalMs: 1000, count: 1 },
+        },
+        questions: { a: 1500, b: -3, c: 99_999, d: 'quick' },
+      },
+    }));
+    assert.deepEqual(progress.speed, { days: { '2026-11-08': { totalMs: 4200, count: 2 } }, questions: { a: 1500 } });
   });
 
   it('壊れた学習日は除く', () => {

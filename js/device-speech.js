@@ -224,6 +224,7 @@ let recognitionCount = 0;
  *
  * @param {object} handlers
  * @param {() => void} [handlers.onReady] マイクが音を拾い始めたとき。
+ * @param {(msAfterReady: number) => void} [handlers.onSpeechStart] 話し始めたとき。マイクが音を拾い始めてから話し始めるまでの時間を渡す。
  * @param {(text: string) => void} [handlers.onInterim] 話している途中の英文。後から変わることがある。
  * @param {() => void} [handlers.onProcessing] 録音を終え、文字への変換を始めたとき。
  * @param {(candidates: string[]) => void} handlers.onResult
@@ -231,6 +232,7 @@ let recognitionCount = 0;
  */
 export function createDeviceRecognizer({
   onReady = () => {},
+  onSpeechStart = () => {},
   onInterim = () => {},
   onProcessing = () => {},
   onResult,
@@ -342,6 +344,8 @@ export function createDeviceRecognizer({
       speechNoted = true;
       nextInterimMs = recordedMs + INTERIM_FIRST_DELAY_MS;
       note('speech');
+      // 判定には少し遅れて気づくので、録音の中で話し始めた位置を渡す。
+      onSpeechStart(detector.speechRange().startMs);
     }
     if (state === 'no-speech') fail('no-speech', 'silence');
     if (state === 'end') finishRecording();

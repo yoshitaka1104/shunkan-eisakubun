@@ -19,6 +19,8 @@ export function emptyProgress() {
     days: {},
     /** 獲得した実績と、獲得した日(achievements.js)。 */
     achievements: {},
+    /** 答えるまでの速さ(speed.js)。日ごとの合計と回数、問題ごとの最新の時間。 */
+    speed: { days: {}, questions: {} },
   };
 }
 
