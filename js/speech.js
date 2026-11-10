@@ -6,7 +6,7 @@
  * iPhone と iPad は標準の音声認識が続けて動かないため、device-speech.js で端末の中で変換する。
  */
 import { audioFileFor, SILENCE_FILE } from './audio-files.js';
-import { createDeviceRecognizer, isDeviceSpeechSupported, prepareDeviceSpeech } from './device-speech.js?v=1.9';
+import { createDeviceRecognizer, isDeviceSpeechSupported, prepareDeviceSpeech } from './device-speech.js?v=1.9.1';
 import { isIOS, logEvent } from './diagnostics.js';
 
 const LANGUAGE = 'en-US';

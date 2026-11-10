@@ -236,6 +236,20 @@ describe('話し始めと話し終わりの検出', () => {
   it('マイクを開いた瞬間から話していても見つける', () => {
     assert.equal(run([...repeat(NOISE, 50), ...repeat(VOICE, 500)]).state, 'speaking');
   });
+
+  it('最初の音がすでに話し声でも、話し始めを見逃さない', () => {
+    const { range } = run([...repeat(VOICE, 500), ...repeat(NOISE, 100), ...repeat(VOICE, 500), ...repeat(NOISE, 1200)]);
+    assert.deepEqual(range, { startMs: 0, endMs: 1100 });
+  });
+
+  it('最初の音がすでに話し声で、区切らずに話しても見つける', () => {
+    assert.equal(run([...repeat(VOICE, 1500), ...repeat(NOISE, 1200)]).state, 'end');
+  });
+
+  it('うるさい場所で録音を始めても、周囲の音を話し声にしない', () => {
+    assert.equal(run(repeat(0.04, 1000)).state, 'waiting');
+    assert.equal(run([...repeat(0.04, 500), ...repeat(0.2, 300)]).state, 'speaking');
+  });
 });
 
 describe('対応の判定', () => {

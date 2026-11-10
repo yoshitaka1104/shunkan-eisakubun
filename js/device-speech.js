@@ -19,6 +19,8 @@ const FRAME_SIZE = 2048;
 const MIN_SPEECH_LEVEL = 0.008;
 /** 周囲の音の何倍の大きさなら話し声とみなすか。 */
 const NOISE_MARGIN = 3;
+/** 録音の最初の音から周囲の音を見積もるときの上限。これより大きな音は話し声の可能性が高い。 */
+const MAX_INITIAL_NOISE = 0.02;
 /** 物音を話し声と間違えないよう、大きな音がこの時間続いてから話し始めとみなす。 */
 const SPEECH_CONFIRM_MS = 120;
 /** 話し声が止まってから、話し終えたとみなすまでの時間。 */
@@ -98,7 +100,9 @@ export function createEndpointDetector() {
      * @returns {'waiting'|'speaking'|'end'|'no-speech'}
      */
     feed(level, frameMs) {
-      noise ??= level;
+      // 最初の音がすでに話し声だと、その大きさを周囲の音とみなして話し始めを見逃す。
+      // 周囲の音の見積もりは上限から始め、本当にうるさい場所なら静かな間に少しずつ上げる。
+      noise ??= Math.min(level, MAX_INITIAL_NOISE);
       const threshold = Math.max(MIN_SPEECH_LEVEL, noise * NOISE_MARGIN);
       elapsedMs += frameMs;
       if (level >= threshold) {
@@ -141,7 +145,7 @@ function resetWorker() {
 function loadModel(onProgress) {
   return new Promise((resolve, reject) => {
     const loadedBytes = new Map();
-    worker = new Worker(new URL('./transcribe-worker.js?v=1.3.1', import.meta.url), { type: 'module' });
+    worker = new Worker(new URL('./transcribe-worker.js?v=1.9.1', import.meta.url), { type: 'module' });
     worker.onerror = (event) => {
       const error = new Error(event.message || 'worker failed');
       reject(error);

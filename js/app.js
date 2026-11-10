@@ -35,7 +35,7 @@ import {
   speak,
   stopSpeaking,
   unlockSpeech,
-} from './speech.js?v=1.9';
+} from './speech.js?v=1.9.1';
 import { answerTime, emptySpeed, formatSeconds, recordSpeed, speedChange, speedSummary } from './speed.js';
 import {
   isStandalone,
@@ -47,7 +47,7 @@ import {
 import { busiestDay, recentDays, studyStreak } from './streak.js';
 
 
-const APP_VERSION = 'v1.9';
+const APP_VERSION = 'v1.9.1';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const LEVEL_NAMES = { 1: '小学校', 2: '中学校', 3: '高校' };
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
