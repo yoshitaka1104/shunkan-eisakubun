@@ -14,6 +14,8 @@
   --warn-soft: #fbefd5;
   --bad: #ad2f44;
   --bad-soft: #fbe6e9;
+  /* 知らせは文字色の地に出すので、ボタンの色も地に合わせる。 */
+  --toast-action: #a9bdf7;
   --radius: 14px;
   font-family: system-ui, -apple-system, "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP", sans-serif;
   line-height: 1.6;
@@ -35,6 +37,7 @@
     --warn-soft: #3a2e15;
     --bad: #f2919f;
     --bad-soft: #40212a;
+    --toast-action: #2f55c8;
   }
 }
 
@@ -140,10 +143,15 @@ input:focus-visible {
   font-size: 0.92rem;
 }
 
+/* 答えのボタンは画面の下にあるので、知らせは上に出して重ならないようにする。 */
 .toast {
   position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
   left: 50%;
-  bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   transform: translateX(-50%);
   max-width: calc(100% - 32px);
   padding: 10px 16px;
@@ -152,6 +160,23 @@ input:focus-visible {
   color: var(--bg);
   font-size: 0.92rem;
   white-space: nowrap;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
+  /* 知らせの下の画面も押せるようにする。ボタンだけは押せる。 */
+  pointer-events: none;
+}
+
+.toast:has(.toast-action) {
+  padding: 2px 4px 2px 16px;
+}
+
+.toast-action {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  background: none;
+  color: var(--toast-action);
+  font-weight: 700;
+  pointer-events: auto;
 }
 
 .failure-detail {
@@ -422,6 +447,47 @@ input:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-top: auto;
+}
+
+/* 学習を始める操作。設定は1行にまとめ、「変更」で開く。 */
+.start-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-box {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.settings-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 4px 2px 16px;
+}
+
+.settings-summary p {
+  min-width: 0;
+  font-size: 0.92rem;
+}
+
+.settings-summary .text-button {
+  flex: 0 0 auto;
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 12px 16px;
+}
+
+.home-links {
   margin-top: auto;
 }
 

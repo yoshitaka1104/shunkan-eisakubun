@@ -8,6 +8,7 @@ import {
   recordSpeed,
   speedChange,
   speedSummary,
+  unrecordSpeed,
 } from '../js/speed.js';
 
 const TODAY = '2026-11-09';
@@ -53,6 +54,24 @@ describe('速さの記録', () => {
     const progress = {};
     recordSpeed(progress, 'E-001', 1000, TODAY);
     assert.equal(progress.speed.questions['E-001'], 1000);
+  });
+
+  it('記録した1回分を取り消すと、前回の時間と日ごとの合計に戻る', () => {
+    const progress = { speed: emptySpeed() };
+    recordSpeed(progress, 'J-001', 2400, TODAY);
+    const previous = recordSpeed(progress, 'J-001', 1800, TODAY);
+    unrecordSpeed(progress, 'J-001', 1800, TODAY, previous);
+    assert.deepEqual(progress.speed, {
+      days: { [TODAY]: { totalMs: 2400, count: 1 } },
+      questions: { 'J-001': 2400 },
+    });
+  });
+
+  it('その日の最後の1回を取り消すと、その日と問題の記録を消す', () => {
+    const progress = { speed: emptySpeed() };
+    const previous = recordSpeed(progress, 'E-001', 1500, TODAY);
+    unrecordSpeed(progress, 'E-001', 1500, TODAY, previous);
+    assert.deepEqual(progress.speed, emptySpeed());
   });
 });
 

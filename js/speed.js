@@ -43,6 +43,19 @@ export function recordSpeed(progress, id, ms, today) {
   return previous;
 }
 
+/**
+ * recordSpeed で記録した1回分を取り消す。「正解にする」を元に戻したときに使う。
+ * @param {number|null} previous recordSpeed が返した、同じ問題の前回の時間
+ */
+export function unrecordSpeed(progress, id, ms, day, previous) {
+  if (previous === null) delete progress.speed.questions[id];
+  else progress.speed.questions[id] = previous;
+  const recorded = progress.speed.days[day];
+  if (!recorded) return;
+  if (recorded.count <= 1) delete progress.speed.days[day];
+  else progress.speed.days[day] = { totalMs: Math.max(recorded.totalMs - ms, 0), count: recorded.count - 1 };
+}
+
 function averageOf(days, firstDay, length) {
   let totalMs = 0;
   let count = 0;

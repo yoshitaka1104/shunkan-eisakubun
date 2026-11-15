@@ -36,7 +36,9 @@ import {
   stopSpeaking,
   unlockSpeech,
 } from './speech.js?v=1.9.1';
-import { answerTime, emptySpeed, formatSeconds, recordSpeed, speedChange, speedSummary } from './speed.js';
+import {
+  answerTime, emptySpeed, formatSeconds, recordSpeed, speedChange, speedSummary, unrecordSpeed,
+} from './speed.js?v=1.10';
 import {
   isStandalone,
   isStoragePersisted,
@@ -47,7 +49,7 @@ import {
 import { busiestDay, recentDays, studyStreak } from './streak.js';
 
 
-const APP_VERSION = 'v1.9.1';
+const APP_VERSION = 'v1.10';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const LEVEL_NAMES = { 1: '小学校', 2: '中学校', 3: '高校' };
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
@@ -56,6 +58,8 @@ const AFTER_CORRECT_DELAY_MS = 500;
 /** マイクの失敗がこの回数続いたら、最初から文字入力を出す。 */
 const BLOCKING_FAILURE_LIMIT = 2;
 const TOAST_MS = 2500;
+/** 「元に戻す」などのボタンがある知らせを出しておく時間。 */
+const TOAST_ACTION_MS = 6000;
 /** iPhone と iPad で初回にダウンロードするデータの大きさ。 */
 const DEVICE_MODEL_MB = 70;
 
@@ -100,6 +104,8 @@ let toastTimer = null;
 let backupState = { pending: null, error: '' };
 /** 文法マップで表示しているレベル。最初に開いたときに、完成していない項目のあるレベルを選ぶ。 */
 let mapLevel = null;
+/** ホームで出題の設定を開いているか。null のあいだは、まだ答えていない人にだけ開いて見せる。 */
+let settingsOpen = null;
 
 function escapeHtml(value) {
   const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -108,20 +114,50 @@ function escapeHtml(value) {
 
 const toastQueue = [];
 
-function displayNextToast() {
-  toast.textContent = toastQueue[0];
-  toast.hidden = false;
+function dismissToast() {
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toastQueue.shift();
-    if (toastQueue.length > 0) displayNextToast();
-    else toast.hidden = true;
-  }, TOAST_MS);
+  toastQueue.shift();
+  if (toastQueue.length > 0) displayNextToast();
+  else toast.hidden = true;
 }
 
-/** 短い知らせを出す。前の知らせが出ている間は、順番を待つ。 */
-function showToast(text) {
-  toastQueue.push(text);
+function displayNextToast() {
+  const { text, action } = toastQueue[0];
+  const message = document.createElement('span');
+  message.textContent = text;
+  toast.replaceChildren(message);
+  if (action) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'toast-action';
+    button.textContent = action.label;
+    button.addEventListener('click', () => {
+      dismissToast();
+      action.run();
+    });
+    toast.append(button);
+  }
+  toast.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(dismissToast, action ? TOAST_ACTION_MS : TOAST_MS);
+}
+
+/**
+ * 短い知らせを出す。前の知らせが出ている間は、順番を待つ。
+ * @param {string} text
+ * @param {object} [options]
+ * @param {{ label: string, run: () => void }} [options.action] 知らせの横に出すボタン。押す時間があるよう、長めに出す。
+ * @param {boolean} [options.first] 順番を待たずに出す。ボタンのある知らせと、操作の結果の知らせに使う。
+ */
+function showToast(text, { action = null, first = Boolean(action) } = {}) {
+  const item = { text, action };
+  if (first && toastQueue.length > 0) {
+    // 出ていた知らせは、その後にもう一度出す。
+    toastQueue.unshift(item);
+    displayNextToast();
+    return;
+  }
+  toastQueue.push(item);
   if (toastQueue.length === 1) displayNextToast();
 }
 
@@ -155,20 +191,30 @@ function todaysReviewIds() {
   return dueQuestionIds(progress, localDate(), knownQuestionIds());
 }
 
-function reviewCard() {
+/**
+ * 今日の復習。復習があるときは、ホームで一番目立つボタンにする。
+ * まだ答えた問題がなければ出さない。
+ */
+function reviewCard(due) {
+  if (due > 0) {
+    return `
+      <section class="review-card has-due">
+        <div class="review-text">
+          <h2>今日の復習</h2>
+          <p>${due}問</p>
+        </div>
+        <button type="button" class="primary" data-action="start-review">復習する</button>
+      </section>`;
+  }
   const today = localDate();
-  const due = todaysReviewIds().length;
   const next = nextReview(progress, today, knownQuestionIds());
-  let detail = '答えた問題が、間隔をあけてここに出ます。';
-  if (due > 0) detail = `${due}問`;
-  else if (next) detail = `今日の分は終わりました。次は${formatDay(next.day, today)}に${next.count}問です。`;
+  if (!next) return '';
   return `
-    <section class="review-card${due > 0 ? ' has-due' : ''}">
+    <section class="review-card">
       <div class="review-text">
         <h2>今日の復習</h2>
-        <p>${detail}</p>
+        <p>今日の分は終わりました。次は${formatDay(next.day, today)}に${next.count}問です。</p>
       </div>
-      <button type="button" class="${due > 0 ? 'primary' : 'secondary'}" data-action="start-review" ${due > 0 ? '' : 'disabled'}>復習する</button>
     </section>`;
 }
 
@@ -287,16 +333,45 @@ function checkAchievements(flags) {
   showToast(unlocked.length === 1 ? `実績を獲得: ${unlocked[0].name}` : `実績を${unlocked.length}個獲得しました`);
 }
 
+/** 今の出題の設定を、ホームの1行に収まる文にする。 */
+function settingsSummary() {
+  const level = filters.level === 'all' ? 'すべてのレベル' : LEVEL_NAMES[filters.level];
+  const count = filters.count === 'all' ? '全問' : `${filters.count}問`;
+  const seconds = progress.settings.timeLimitSec;
+  return `${level}・${count}・${seconds === 0 ? '制限時間なし' : `制限時間${seconds}秒`}`;
+}
+
+function settingsFields() {
+  const levels = LEVEL_OPTIONS.map((value) => ({ value, text: value === 'all' ? 'すべて' : LEVEL_NAMES[value] }));
+  const counts = COUNT_OPTIONS.map((value) => ({ value, text: value === 'all' ? '全問' : `${value}問` }));
+  const limits = TIME_LIMIT_OPTIONS.map((value) => ({ value, text: value === 0 ? 'なし' : `${value}秒` }));
+  return `
+    <section class="field">
+      <h2>レベル</h2>
+      ${segmented('set-level', levels, filters.level, 'レベル')}
+    </section>
+    <section class="field">
+      <h2>問題数</h2>
+      ${segmented('set-count', counts, filters.count, '問題数')}
+    </section>
+    <section class="field">
+      <h2>制限時間</h2>
+      ${segmented('set-time-limit', limits, progress.settings.timeLimitSec, '制限時間')}
+    </section>`;
+}
+
 function renderHome() {
   // これまでの記録だけで条件を満たした実績も、ここで獲得する。
   checkAchievements();
   const { attempts, rate } = totals(progress, knownQuestionIds());
+  const isNewLearner = attempts === 0;
   const weakCount = knownWeakIds().length;
+  const due = todaysReviewIds().length;
   const mastery = masterySummary(questions, progress);
-  const levels = LEVEL_OPTIONS.map((value) => ({ value, text: value === 'all' ? 'すべて' : LEVEL_NAMES[value] }));
-  const counts = COUNT_OPTIONS.map((value) => ({ value, text: value === 'all' ? '全問' : `${value}問` }));
-  const limits = TIME_LIMIT_OPTIONS.map((value) => ({ value, text: value === 0 ? 'なし' : `${value}秒` }));
+  const settingsVisible = settingsOpen ?? isNewLearner;
 
+  // 「始める」を最初の画面に収めるため、学習を始める操作を記録の表示より上に置く。
+  // まだ答えていない人には、空の記録を並べない。
   root.innerHTML = `
     <main class="screen home">
       <header class="home-head">
@@ -304,35 +379,31 @@ function renderHome() {
         <p>日本語を見て、すぐ英語で言う。</p>
       </header>
 
+      ${isNewLearner ? '' : `
       <dl class="stats">
         <div><dt>回答数</dt><dd>${attempts}</dd></div>
         <div><dt>正解率</dt><dd>${rate}<small>%</small></dd></div>
         <div><dt>マスター</dt><dd>${mastery.mastered}<small>/${mastery.total}</small></dd></div>
-      </dl>
+      </dl>`}
 
-      ${streakCard()}
-      ${speedCard()}
-      ${reviewCard()}
+      ${reviewCard(due)}
 
-      <section class="field">
-        <h2>レベル</h2>
-        ${segmented('set-level', levels, filters.level, 'レベル')}
-      </section>
-      <section class="field">
-        <h2>問題数</h2>
-        ${segmented('set-count', counts, filters.count, '問題数')}
-      </section>
-      <section class="field">
-        <h2>制限時間</h2>
-        ${segmented('set-time-limit', limits, progress.settings.timeLimitSec, '制限時間')}
+      <section class="start-panel" aria-label="学習を始める">
+        <div class="settings-box">
+          <div class="settings-summary">
+            <p><span class="visually-hidden">今の設定:</span>${settingsSummary()}</p>
+            <button type="button" class="text-button" data-action="toggle-settings"
+              aria-expanded="${settingsVisible}" aria-controls="home-settings">${settingsVisible ? '閉じる' : '変更'}</button>
+          </div>
+          <div class="settings" id="home-settings" ${settingsVisible ? '' : 'hidden'}>${settingsFields()}</div>
+        </div>
+        <button type="button" class="${due > 0 ? 'secondary' : 'primary'}" data-action="start">始める</button>
+        ${weakCount > 0 ? `<button type="button" class="secondary" data-action="start-weak">苦手な問題を出題 (${weakCount}問)</button>` : ''}
       </section>
 
-      <div class="home-actions">
-        <button type="button" class="primary" data-action="start">始める</button>
-        <button type="button" class="secondary" data-action="start-weak" ${weakCount === 0 ? 'disabled' : ''}>
-          苦手な問題を出題 (${weakCount}問)
-        </button>
-      </div>
+      ${Object.keys(progress.days).length > 0 ? streakCard() : ''}
+      ${Object.keys(progress.speed.days).length > 0 ? speedCard() : ''}
+
       <div class="home-links">
         <button type="button" class="secondary" data-action="show-map">文法マップ</button>
         <button type="button" class="secondary" data-action="show-achievements">実績 ${earnedCount(progress)}/${ACHIEVEMENTS.length}</button>
@@ -582,6 +653,8 @@ async function prepareVoice() {
 }
 
 async function startSession(picked, mode = 'normal') {
+  // 学習を終えてホームに戻ったら、設定は畳んで「始める」を見やすくする。
+  settingsOpen = null;
   const voiceAvailable = isRecognitionSupported();
   session = {
     queue: picked,
@@ -695,7 +768,7 @@ function showListenHint(text) {
 
 function showMicReady() {
   root.querySelector('[data-mic]')?.classList.add('is-listening');
-  showListenHint('聞いています。話し終えたらタップ');
+  showListenHint('聞いています。話し終えると自動で判定します');
 }
 
 function showProcessing() {
@@ -753,14 +826,19 @@ function handleRecognitionError(kind, code) {
   renderQuiz();
 }
 
-/** 初回に話し始めるまでの時間を、正解した回答の速さとして記録する。 */
+/**
+ * 初回に話し始めるまでの時間を、正解した回答の速さとして記録する。
+ * @returns {{ ms: number, previous: number|null, day: string }|null} 記録した内容。取り消すときに使う。
+ */
 function noteSpeed(id) {
   const ms = session.firstSpeeds.get(id);
-  if (ms === undefined) return;
+  if (ms === undefined) return null;
   session.firstSpeeds.delete(id);
-  const previous = recordSpeed(progress, id, ms, localDate());
+  const day = localDate();
+  const previous = recordSpeed(progress, id, ms, day);
   session.speeds.push(ms);
   session.lastSpeed = { id, ms, previous };
+  return { ms, previous, day };
 }
 
 /**
@@ -798,26 +876,77 @@ function submitAnswer(candidates, { spoken = false } = {}) {
   speak(verdict.modelText);
 }
 
-function announceMastered(id) {
+function masteredMessage(id) {
   session.newlyMastered.add(id);
   const { mastered, total } = masterySummary(questions, progress);
-  showToast(`マスターしました(${mastered}/${total}問)`);
+  return `マスターしました(${mastered}/${total}問)`;
 }
 
-/** 自分の回答を正解例に加え、この問題を正解として記録し直す。 */
+function announceMastered(id) {
+  showToast(masteredMessage(id));
+}
+
+/** 「正解にする」で変わる、この問題の記録と、この回の状態を覚えておく。 */
+function rememberBeforeAccept(id) {
+  return {
+    id,
+    session,
+    stat: structuredClone(progress.stats[id]),
+    review: structuredClone(progress.review[id]),
+    customAnswers: structuredClone(progress.customAnswers[id]),
+    firstResult: session.firstResults.get(id),
+    firstSpeed: session.firstSpeeds.get(id),
+    speedIndex: session.speeds.length,
+    lastSpeed: session.lastSpeed,
+    mastered: session.newlyMastered.has(id),
+  };
+}
+
+/**
+ * 「正解にする」を取り消す。
+ * 取り消すまでに次の問題へ答えていても、その記録は残るよう、この問題の分だけを戻す。
+ * 獲得した実績は、ほかの場合と同じく取り消さない。
+ */
+function undoAccept(before, speed) {
+  const { id } = before;
+  const restore = (records, value) => {
+    if (value === undefined) delete records[id];
+    else records[id] = value;
+  };
+  restore(progress.stats, before.stat);
+  restore(progress.review, before.review);
+  restore(progress.customAnswers, before.customAnswers);
+  if (speed) unrecordSpeed(progress, id, speed.ms, speed.day, speed.previous);
+  saveProgress(progress);
+  const sameSession = session === before.session;
+  if (sameSession) {
+    session.firstResults.set(id, before.firstResult);
+    if (before.firstSpeed !== undefined) session.firstSpeeds.set(id, before.firstSpeed);
+    if (speed) session.speeds.splice(before.speedIndex, 1);
+    if (session.lastSpeed?.id === id) session.lastSpeed = before.lastSpeed;
+    if (!before.mastered) session.newlyMastered.delete(id);
+  }
+  showToast('元に戻しました', { first: true });
+  // 結果の画面かホームを開いていれば、戻した記録で描き直す。
+  if (sameSession && root.querySelector('.summary')) renderSummary();
+  else if (root.querySelector('.home')) renderHome();
+}
+
+/** 自分の回答を正解例に加え、この問題を正解として記録し直す。知らせの「元に戻す」で取り消せる。 */
 function acceptAnswer() {
-  const question = currentQuestion();
-  addCustomAnswer(progress, question.id, session.verdict.answerText);
-  const wasCorrect = session.firstResults.get(question.id) === 'correct';
-  reclassifyAsCorrect(progress, question.id, session.firstResults.get(question.id));
-  session.firstResults.set(question.id, 'correct');
+  const { id } = currentQuestion();
+  const before = rememberBeforeAccept(id);
+  addCustomAnswer(progress, id, session.verdict.answerText);
+  const wasCorrect = session.firstResults.get(id) === 'correct';
+  reclassifyAsCorrect(progress, id, session.firstResults.get(id));
+  session.firstResults.set(id, 'correct');
   const change = wasCorrect
     ? null
-    : recordAsCorrectInstead(progress, question.id, session.reviewBefore.get(question.id), localDate());
-  if (!wasCorrect) noteSpeed(question.id);
+    : recordAsCorrectInstead(progress, id, session.reviewBefore.get(id), localDate());
+  const speed = wasCorrect ? null : noteSpeed(id);
   saveProgress(progress);
-  if (change?.mastered) announceMastered(question.id);
-  else showToast('正解例に追加しました');
+  const message = change?.mastered ? masteredMessage(id) : '正解例に追加しました';
+  showToast(message, { action: { label: '元に戻す', run: () => undoAccept(before, speed) } });
   checkAchievements();
   nextQuestion();
 }
@@ -1152,6 +1281,11 @@ const ACTIONS = {
     progress.settings.timeLimitSec = Number(value);
     saveProgress(progress);
     renderHome();
+  },
+  'toggle-settings': () => {
+    settingsOpen = root.querySelector('#home-settings').hidden;
+    renderHome();
+    root.querySelector('[data-action="toggle-settings"]').focus();
   },
   start: () => requestStart(pickQuestions(questions, filters)),
   'start-weak': () => requestStart(pickQuestions(questions, { ids: knownWeakIds() }), 'weak'),
