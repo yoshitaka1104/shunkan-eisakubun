@@ -49,7 +49,7 @@ import {
 import { busiestDay, recentDays, studyStreak } from './streak.js';
 
 
-const APP_VERSION = 'v1.10';
+const APP_VERSION = 'v1.10.1';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const LEVEL_NAMES = { 1: '小学校', 2: '中学校', 3: '高校' };
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
@@ -192,7 +192,7 @@ function todaysReviewIds() {
 }
 
 /**
- * 今日の復習。復習があるときは、ホームで一番目立つボタンにする。
+ * 今日の復習。復習があるときは、「始める」と同じ青いボタンで出す。
  * まだ答えた問題がなければ出さない。
  */
 function reviewCard(due) {
@@ -397,7 +397,7 @@ function renderHome() {
           </div>
           <div class="settings" id="home-settings" ${settingsVisible ? '' : 'hidden'}>${settingsFields()}</div>
         </div>
-        <button type="button" class="${due > 0 ? 'secondary' : 'primary'}" data-action="start">始める</button>
+        <button type="button" class="primary" data-action="start">始める</button>
         ${weakCount > 0 ? `<button type="button" class="secondary" data-action="start-weak">苦手な問題を出題 (${weakCount}問)</button>` : ''}
       </section>
 
