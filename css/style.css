@@ -16,6 +16,8 @@
   --bad-soft: #fbe6e9;
   /* 知らせは文字色の地に出すので、ボタンの色も地に合わせる。 */
   --toast-action: #a9bdf7;
+  /* 連続正解の星。飾りなので、文字の色には使わない。 */
+  --star: #e8a400;
   --radius: 14px;
   font-family: system-ui, -apple-system, "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP", sans-serif;
   line-height: 1.6;
@@ -38,6 +40,7 @@
     --bad: #f2919f;
     --bad-soft: #40212a;
     --toast-action: #2f55c8;
+    --star: #f5c542;
   }
 }
 
@@ -1096,6 +1099,127 @@ input:focus-visible {
 
 .verdict-correct {
   color: var(--good);
+}
+
+/* 連続正解 */
+.verdict-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.combo {
+  position: relative;
+  /* 星を文字の後ろに回し、飛んでいる間も文字を読めるようにする。 */
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 4px 10px;
+  border-radius: 999px;
+  background: var(--good-soft);
+  color: var(--good);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.combo strong {
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.combo-star {
+  flex: 0 0 auto;
+  color: var(--star);
+}
+
+.combo-cheer {
+  margin-left: 4px;
+}
+
+.combo-medium {
+  font-size: 1.05rem;
+}
+
+.combo-large {
+  padding: 6px 16px 6px 12px;
+  font-size: 1.15rem;
+}
+
+.combo-large strong {
+  font-size: 1.4rem;
+}
+
+.combo.is-milestone {
+  animation: combo-pop 520ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+@keyframes combo-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.sparkles {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sparkles span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  background: var(--star);
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  opacity: 0;
+  animation: sparkle 900ms ease-out var(--delay) forwards;
+}
+
+.sparkles span:nth-child(3n + 2) {
+  background: var(--accent);
+}
+
+.sparkles span:nth-child(3n) {
+  width: 9px;
+  height: 9px;
+  background: var(--good);
+}
+
+@keyframes sparkle {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(45deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .combo.is-milestone {
+    animation: none;
+  }
+
+  .sparkles {
+    display: none;
+  }
 }
 
 .verdict-close {

@@ -1,10 +1,11 @@
 /**
  * 画面の表示と学習の流れを担当する。
  * 判定は judge.js、記録は progress.js、習熟度と復習は review.js、連続学習日数は streak.js、
- * 実績は achievements.js、答えるまでの速さは speed.js、音声は speech.js に任せる。
+ * 実績は achievements.js、答えるまでの速さは speed.js、連続正解は combo.js、音声は speech.js に任せる。
  */
 import { ACHIEVEMENTS, achievementProgress, earnedCount, unlockAchievements } from './achievements.js';
 import { BackupError, backupFileName, createBackup, readBackup, summarizeProgress } from './backup.js?v=1.8';
+import { comboAt, comboMessage, longestCombo } from './combo.js?v=1.11';
 import { diagnostics, isIOS, logEvent } from './diagnostics.js';
 import { judge } from './judge.js?v=1.5';
 import {
@@ -49,7 +50,7 @@ import {
 import { busiestDay, recentDays, studyStreak } from './streak.js';
 
 
-const APP_VERSION = 'v1.10.1';
+const APP_VERSION = 'v1.11';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const LEVEL_NAMES = { 1: '小学校', 2: '中学校', 3: '高校' };
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
@@ -1011,9 +1012,56 @@ function speedNote() {
   return `<p class="speed-note">話し始めるまで ${formatSeconds(speed.ms)}秒${previous}</p>`;
 }
 
+/** 出題順に並べた、各問の初回の結果。 */
+function sessionResults() {
+  return session.queue.map((question) => session.firstResults.get(question.id));
+}
+
+/** 祝うときに飛ばす星の数と広がり。続くほど大きくする。 */
+const SPARKLES = {
+  small: { count: 8, radius: 46 },
+  medium: { count: 10, radius: 58 },
+  large: { count: 14, radius: 72 },
+};
+
+function sparklesHtml(size) {
+  const { count, radius } = SPARKLES[size];
+  const stars = Array.from({ length: count }, (_, index) => {
+    const angle = (index / count) * 2 * Math.PI - Math.PI / 2;
+    // 横長の知らせに合わせて、横に広く、縦に狭く飛ばす。内側と外側を交互にする。
+    const distance = radius * (index % 2 ? 0.72 : 1);
+    const dx = (Math.cos(angle) * distance * 1.3).toFixed(1);
+    const dy = (Math.sin(angle) * distance * 0.7).toFixed(1);
+    return `<span style="--dx: ${dx}px; --dy: ${dy}px; --delay: ${(index % 3) * 50}ms"></span>`;
+  }).join('');
+  return `<span class="sparkles" aria-hidden="true">${stars}</span>`;
+}
+
+const STAR_ICON = `<svg class="combo-star" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+  <path d="M12 2l2.6 6.6L21.5 9.3l-5.3 4.5 1.7 6.9L12 17l-5.9 3.7 1.7-6.9-5.3-4.5 6.9-.7z" fill="currentColor"/>
+</svg>`;
+
+/** 続けて正解した数を、正解の画面に出す。区切りの数では星を飛ばして祝う。 */
+function comboHtml() {
+  const combo = comboMessage(comboAt(sessionResults(), session.index));
+  if (!combo) return '';
+  const classes = ['combo', `combo-${combo.size}`, combo.milestone ? 'is-milestone' : ''].join(' ').trim();
+  const text = combo.milestone
+    ? `<strong>${combo.count}</strong>問連続正解！${combo.cheer ? `<span class="combo-cheer">${combo.cheer}</span>` : ''}`
+    : `<strong>${combo.count}</strong>問連続正解`;
+  return `
+    <p class="${classes}">
+      ${STAR_ICON}<span class="combo-text">${text}</span>
+      ${combo.milestone ? sparklesHtml(combo.size) : ''}
+    </p>`;
+}
+
 function correctPanel() {
   return `
-    <p class="verdict verdict-correct">${VERDICT_LABELS.correct}</p>
+    <div class="verdict-row">
+      <p class="verdict verdict-correct">${VERDICT_LABELS.correct}</p>
+      ${comboHtml()}
+    </div>
     <p class="model-answer" lang="en">${escapeHtml(session.verdict.modelText)}</p>
     ${speedNote()}
     <button type="button" class="primary" data-action="next">${nextLabel()}</button>`;
@@ -1125,6 +1173,8 @@ function renderSummary() {
 /** 結果の画面で、マスターした問題と、残っている今日の復習を知らせる。 */
 function summaryNotes() {
   const notes = [];
+  const best = longestCombo(sessionResults());
+  if (best >= 3) notes.push(`いちばん長い連続正解: ${best}問`);
   if (session.speeds.length > 0) {
     const average = session.speeds.reduce((sum, ms) => sum + ms, 0) / session.speeds.length;
     notes.push(`話し始めるまでの平均: ${formatSeconds(average)}秒(${session.speeds.length}問)`);
