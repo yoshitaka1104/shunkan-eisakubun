@@ -7,6 +7,7 @@ import {
   readBackup,
   summarizeProgress,
 } from '../js/backup.js';
+import { feedCompanion, newCompanion } from '../js/companion.js';
 import { emptyProgress, recordResult } from '../js/progress.js';
 
 function sampleProgress() {
@@ -20,6 +21,9 @@ function sampleProgress() {
   progress.days = { '2026-11-07': 4, '2026-11-08': 2 };
   progress.achievements = { 'first-correct': '2026-11-07' };
   progress.speed = { days: { '2026-11-08': { totalMs: 4200, count: 2 } }, questions: { 'E-001': 1800 } };
+  progress.companion = newCompanion('2026-11-07');
+  progress.companion.name = 'ポチ';
+  for (let i = 0; i < 6; i += 1) feedCompanion(progress.companion, { level: 1, mode: 'review', fast: true, spoken: true, correct: true }, { today: '2026-11-08', days: progress.days, random: () => 1 });
   return progress;
 }
 
@@ -37,6 +41,14 @@ describe('書き出し', () => {
 
   it('ファイル名に端末の日付を付ける', () => {
     assert.equal(backupFileName(new Date(2026, 10, 7, 23, 59)), 'shunkan-eisakubun-2026-11-07.json');
+  });
+
+  it('相棒の記録がない、前の版のファイルも読める', () => {
+    assert.equal(readBackup(fileWith({ stats: {} })).progress.companion, null);
+  });
+
+  it('使えない相棒の記録は読まず、新しいたまごにする', () => {
+    assert.equal(readBackup(fileWith({ companion: { stage: 'adult', species: 'moko' } })).progress.companion, null);
   });
 
   it('前回の書き出し日時も引き継ぐ', () => {

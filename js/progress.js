@@ -21,6 +21,8 @@ export function emptyProgress() {
     achievements: {},
     /** 答えるまでの速さ(speed.js)。日ごとの合計と回数、問題ごとの最新の時間。 */
     speed: { days: {}, questions: {} },
+    /** 育つ相棒(companion.js)。初めて開いたときに、たまごを用意する。 */
+    companion: null,
   };
 }
 

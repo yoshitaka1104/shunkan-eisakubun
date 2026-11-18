@@ -3,6 +3,7 @@
  * 記録は端末の中にしかないので、消えたときや、Safari とホーム画面のアプリの間で移すときに使う。
  * 読み込むファイルは手で書き換えられている可能性があるため、使える値だけを取り出す。
  */
+import { readCompanion } from './companion.js?v=1.12';
 import { emptyProgress } from './progress.js';
 import { MAX_SPEED_MS } from './speed.js';
 
@@ -167,6 +168,7 @@ export function readBackup(text) {
       days: readDays(source.days),
       achievements: readAchievements(source.achievements),
       speed: readSpeed(source.speed),
+      companion: readCompanion(source.companion),
     },
     exportedAt: readDate(data.exportedAt),
   };

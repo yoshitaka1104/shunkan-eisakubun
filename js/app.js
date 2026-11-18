@@ -1,11 +1,34 @@
 /**
  * 画面の表示と学習の流れを担当する。
  * 判定は judge.js、記録は progress.js、習熟度と復習は review.js、連続学習日数は streak.js、
- * 実績は achievements.js、答えるまでの速さは speed.js、連続正解は combo.js、音声は speech.js に任せる。
+ * 実績は achievements.js、答えるまでの速さは speed.js、連続正解は combo.js、
+ * 育つ相棒は companion.js(絵は companion-art.js)、音声は speech.js に任せる。
  */
 import { ACHIEVEMENTS, achievementProgress, earnedCount, unlockAchievements } from './achievements.js';
-import { BackupError, backupFileName, createBackup, readBackup, summarizeProgress } from './backup.js?v=1.8';
+import { BackupError, backupFileName, createBackup, readBackup, summarizeProgress } from './backup.js?v=1.12';
 import { comboAt, comboMessage, longestCombo } from './combo.js?v=1.11';
+import { companionSvg } from './companion-art.js?v=1.12';
+import {
+  canReceiveEgg,
+  displayName,
+  FAST_MS,
+  feedCompanion,
+  formById,
+  formId,
+  formName,
+  FORMS,
+  NAME_MAX_LENGTH,
+  newCompanion,
+  nextStep,
+  RARE_SUFFIX,
+  receiveEgg,
+  SECRETS,
+  SPECIES,
+  STAGE_LABELS,
+  STAGE_POINTS,
+  takeNews,
+  VARIANTS,
+} from './companion.js?v=1.12';
 import { diagnostics, isIOS, logEvent } from './diagnostics.js';
 import { judge } from './judge.js?v=1.5';
 import {
@@ -50,7 +73,7 @@ import {
 import { busiestDay, recentDays, studyStreak } from './streak.js';
 
 
-const APP_VERSION = 'v1.11';
+const APP_VERSION = 'v1.12';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const LEVEL_NAMES = { 1: '小学校', 2: '中学校', 3: '高校' };
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
@@ -334,6 +357,100 @@ function checkAchievements(flags) {
   showToast(unlocked.length === 1 ? `実績を獲得: ${unlocked[0].name}` : `実績を${unlocked.length}個獲得しました`);
 }
 
+/** 相棒の記録。まだなければ、たまごを用意する。 */
+function companion() {
+  progress.companion ??= newCompanion(localDate());
+  return progress.companion;
+}
+
+/** 相棒の絵。かえる直前のたまごには、ひびを入れる。extra は絵に重ねる飾り(星など)。 */
+function companionFigure(c, size, extra = '') {
+  const cracked = c.stage === 'egg' && c.points >= STAGE_POINTS.baby - 2;
+  return `<span class="companion-figure${c.stage === 'egg' ? ' is-egg' : ''}">${companionSvg(formId(c), { size, cracked, rare: c.rare })}${extra}</span>`;
+}
+
+/** 名前の下に出す、今の段階。名前をつけていれば、姿の名前も添える。 */
+function companionStage(c) {
+  if (c.stage === 'egg') return c.name ? 'たまご' : 'なにが生まれるかな';
+  const stage = c.grownOn ? '一人前' : STAGE_LABELS[c.stage];
+  return [stage, c.name ? formName(c) : '', c.rare ? '色ちがい' : ''].filter(Boolean).join('・');
+}
+
+const NEXT_STEP_TEXTS = {
+  baby: (remaining) => `あと${remaining}問でかえります`,
+  child: (remaining) => `あと${remaining}問で、こどもに育ちます`,
+  adult: (remaining) => `あと${remaining}問で、おとなに育ちます`,
+  grown: (remaining) => `あと${remaining}問で一人前です`,
+};
+
+/** 次の段階までの進み具合。ボタンの中にも置くので、span だけで組む。 */
+function companionProgressHtml(c) {
+  const step = nextStep(c);
+  if (!step) return '<span class="companion-next">一人前になりました。新しいたまごを受け取れます。</span>';
+  return `
+    <span class="meter" aria-hidden="true"><span style="width: ${Math.round(step.ratio * 100)}%"></span></span>
+    <span class="companion-next">${NEXT_STEP_TEXTS[step.next](step.remaining)}</span>`;
+}
+
+/** ホームの相棒。押すと相棒の画面を開く。ホームに出さない設定なら出さない。 */
+function companionCard(isNew) {
+  const c = companion();
+  if (c.hidden) return '';
+  return `
+    <section class="companion-card${isNew ? ' is-new' : ''}" aria-label="相棒">
+      <button type="button" class="companion-open" data-action="show-companion">
+        ${companionFigure(c, 76)}
+        <span class="companion-info">
+          <span class="companion-name">${escapeHtml(displayName(c))}</span>
+          <span class="companion-stage">${companionStage(c)}</span>
+          ${companionProgressHtml(c)}
+        </span>
+      </button>
+    </section>`;
+}
+
+/**
+ * 一人前になった相棒が、どうしてその姿になったか。
+ * 姿の決まり方は育ててのお楽しみなので、一人前になるまでは出さない。
+ */
+function growthStory(species, variant) {
+  const adult = SECRETS[variant] ?? VARIANTS[variant];
+  const adultName = SECRETS[variant] ? adult.name : formById(`${species}-${variant}`).name;
+  return [
+    `${SPECIES[species].name}になったのは、${SPECIES[species].reason}から。`,
+    `${adultName}になったのは、${adult.reason}から。`,
+  ];
+}
+
+/** 相棒の出来事を、結果の画面に出す見出しと文(HTML)にする。姿が変わった理由は、一人前になったときだけ出す。 */
+function companionNewsText(event, c) {
+  const to = formById(event.to);
+  if (event.kind === 'grown') {
+    return {
+      title: '一人前になりました！',
+      texts: [
+        `${escapeHtml(c.name || to.name)}は一人前です。`,
+        ...growthStory(c.species, c.variant),
+        '相棒の画面で、新しいたまごを受け取れます。',
+      ],
+    };
+  }
+  const extras = [];
+  if (to.secret) extras.push('ひみつの姿です！');
+  if (event.rare) extras.push('めずらしい色の、色ちがいです！');
+  if (event.to === 'baby') return { title: 'たまごがかえりました！', texts: [`「${to.name}」が生まれました。`, ...extras] };
+  return { title: `${STAGE_LABELS[to.stage]}になりました！`, texts: [`「${to.name}」に育ちました。`, ...extras] };
+}
+
+/** 結果の画面を出さずにホームへ戻ったときの、短い知らせ。 */
+function companionNewsToast(news) {
+  const last = news.at(-1);
+  if (last.kind === 'grown') return '相棒が一人前になりました';
+  const rare = last.rare ? '(色ちがい)' : '';
+  if (last.to === 'baby') return `たまごがかえりました${rare}`;
+  return `相棒が「${formById(last.to).name}」に育ちました${rare}`;
+}
+
 /** 今の出題の設定を、ホームの1行に収まる文にする。 */
 function settingsSummary() {
   const level = filters.level === 'all' ? 'すべてのレベル' : LEVEL_NAMES[filters.level];
@@ -364,6 +481,12 @@ function settingsFields() {
 function renderHome() {
   // これまでの記録だけで条件を満たした実績も、ここで獲得する。
   checkAchievements();
+  // 学習の途中でやめて結果の画面を出さなかったときは、育ったことをここで知らせる。
+  const companionNews = takeNews(companion());
+  if (companionNews.length > 0) {
+    saveProgress(progress);
+    if (!companion().hidden) showToast(companionNewsToast(companionNews));
+  }
   const { attempts, rate } = totals(progress, knownQuestionIds());
   const isNewLearner = attempts === 0;
   const weakCount = knownWeakIds().length;
@@ -402,12 +525,15 @@ function renderHome() {
         ${weakCount > 0 ? `<button type="button" class="secondary" data-action="start-weak">苦手な問題を出題 (${weakCount}問)</button>` : ''}
       </section>
 
+      ${companionCard(companionNews.length > 0)}
+
       ${Object.keys(progress.days).length > 0 ? streakCard() : ''}
       ${Object.keys(progress.speed.days).length > 0 ? speedCard() : ''}
 
       <div class="home-links">
         <button type="button" class="secondary" data-action="show-map">文法マップ</button>
         <button type="button" class="secondary" data-action="show-achievements">実績 ${earnedCount(progress)}/${ACHIEVEMENTS.length}</button>
+        ${companion().hidden ? '<button type="button" class="secondary" data-action="show-companion">相棒</button>' : ''}
       </div>
       ${isRecognitionSupported() ? '' : `<p class="notice">${UNSUPPORTED_MESSAGE}</p>`}
       ${shouldShowHomeScreenTip() ? HOME_SCREEN_TIP : ''}
@@ -464,6 +590,7 @@ function confirmPanel() {
     <div class="confirm" role="group" aria-label="読み込む記録の確認">
       <p>${when}</p>
       <p>回答${next.attempts}回、${next.questions}問、マスター${next.mastered}問、学習した日${next.days}日、実績${next.achievements}個、追加した正解例${next.customAnswers}文</p>
+      ${incoming.companion ? `<p>相棒: ${escapeHtml(displayName(incoming.companion))}(${companionStage(incoming.companion)})</p>` : ''}
       <p>今の記録(回答${current.attempts}回)を、この内容で置き換えます。</p>
       ${warning}
       <div class="actions">
@@ -859,6 +986,13 @@ function submitAnswer(candidates, { spoken = false } = {}) {
     const ms = spoken && session.timing.listens === 1 ? answerTime(session.timing) : null;
     if (ms !== null) session.firstSpeeds.set(question.id, ms);
     if (verdict.result === 'correct') noteSpeed(question.id);
+    feedCompanion(companion(), {
+      level: question.level,
+      mode: session.mode,
+      fast: verdict.result === 'correct' && ms !== null && ms <= FAST_MS,
+      spoken,
+      correct: verdict.result === 'correct',
+    }, { today: localDate(), days: progress.days });
     saveProgress(progress);
     if (change.mastered) announceMastered(question.id);
     checkAchievements();
@@ -1159,6 +1293,7 @@ function renderSummary() {
         <div><dt>惜しい</dt><dd>${count('close')}</dd></div>
         <div><dt>不正解</dt><dd>${count('wrong')}</dd></div>
       </dl>
+      ${companionResult()}
       ${summaryNotes()}
       ${missed.length > 0 ? `<section><h2>今回の苦手な問題</h2><ol class="missed">${missedItems}</ol></section>` : ''}
       <div class="home-actions">
@@ -1184,6 +1319,39 @@ function summaryNotes() {
   const due = todaysReviewIds().length;
   if (due > 0) notes.push(`今日の復習が、あと${due}問あります。`);
   return notes.length ? `<div class="summary-notes">${notes.map((note) => `<p>${note}</p>`).join('')}</div>` : '';
+}
+
+/** 結果の画面の相棒。姿が変わったら、星を飛ばして知らせる。 */
+function companionResult() {
+  const c = companion();
+  // 「正解にする」の取り消しで描き直しても同じ知らせを出せるよう、この回の分は session に残す。
+  if (session.companionNews === undefined) {
+    session.companionNews = takeNews(c);
+    if (session.companionNews.length > 0) saveProgress(progress);
+  }
+  if (c.hidden) return '';
+  const news = session.companionNews;
+  const changed = news.length > 0;
+  let title;
+  let texts;
+  if (changed) {
+    const messages = news.map((event) => companionNewsText(event, c));
+    title = messages.at(-1).title;
+    texts = messages.flatMap((message) => message.texts);
+  } else {
+    title = c.stage === 'egg' ? 'たまごが少し動きました' : `${escapeHtml(displayName(c))}が育ちました`;
+    texts = [`この回で${session.firstResults.size}問ぶん育ちました。`];
+  }
+  return `
+    <section class="companion-result${changed ? ' is-changed' : ''}" aria-label="相棒">
+      ${companionFigure(c, changed ? 112 : 80, changed ? sparklesHtml('large') : '')}
+      <div class="companion-result-text">
+        <h2>${title}</h2>
+        ${texts.map((text) => `<p>${text}</p>`).join('')}
+        ${companionProgressHtml(c)}
+        <button type="button" class="text-button" data-action="show-companion">相棒を見る</button>
+      </div>
+    </section>`;
 }
 
 const LEVEL_KEYS = { 1: 'elementary', 2: 'junior', 3: 'high' };
@@ -1298,6 +1466,159 @@ function renderAchievements() {
     </main>`;
 }
 
+/** 「今のようす」の言葉。どの姿に育つかの手がかりにならない言葉だけを、日ごとに入れ替える。 */
+const MOODS = {
+  egg: ['ときどき、たまごが動いています。', 'たまごの中から、小さな音がします。', 'たまごが、ほんのりあたたかいです。'],
+  baby: ['元気に育っています。', 'ころころ転がって遊んでいます。', 'きょろきょろ、まわりを見ています。'],
+  child: ['すくすく育っています。', 'どんなおとなになるのかな。', '少し大きくなりました。'],
+};
+
+function companionMood(c) {
+  if (c.stage === 'adult') return c.grownOn ? 'りっぱな一人前です。' : 'おとなになりました。一人前まで、もう少しです。';
+  if (c.stage === 'egg' && c.points === 0) return 'たまごです。問題に答えると育ちます。';
+  const moods = MOODS[c.stage];
+  return moods[Number(localDate().replaceAll('-', '')) % moods.length];
+}
+
+function companionHint(c) {
+  if (c.stage !== 'adult') return 'どんな姿に育つかは、育ててのお楽しみです。一人前になったら、育ち方をふりかえれます。';
+  if (c.grownOn) return '新しいたまごを受け取っても、この相棒は「なかま」に残ります。';
+  return '一人前になると、育ち方をふりかえれます。新しいたまごも受け取れて、育てた相棒は「なかま」に残ります。';
+}
+
+/**
+ * 図鑑の1つの姿。まだ会っていない姿は影で出し、ひみつの姿は影も出さない。
+ * 色ちがいに会ったことのある姿には、色ちがいの絵を小さく添える。
+ */
+function zukanItem(form, c) {
+  const seen = Boolean(c.seen[form.id]);
+  const rareSeen = Boolean(c.seen[form.id + RARE_SUFFIX]);
+  const name = seen
+    ? form.name
+    : '<span aria-hidden="true">？？？</span><span class="visually-hidden">まだ会っていない姿</span>';
+  const figure = !seen && form.secret
+    ? '<span class="zukan-secret" aria-hidden="true">？</span>'
+    : `<span class="companion-figure">${companionSvg(form.id, { size: 64 })}</span>`;
+  const rare = rareSeen
+    ? `<span class="zukan-rare">${companionSvg(form.id, { size: 28, rare: true })}色ちがい</span>`
+    : '';
+  return `
+    <li class="zukan-item${seen ? '' : ' is-unknown'}">
+      ${figure}
+      <span class="zukan-name">${name}</span>
+      ${rare}
+    </li>`;
+}
+
+/** 図鑑。会ったことのある姿は色で、まだの姿は影で出す。どうすれば会えるかは書かない。 */
+function zukanHtml(c) {
+  const items = (filter) => FORMS.filter(filter).map((form) => zukanItem(form, c)).join('');
+  const seenCount = FORMS.filter(({ id }) => c.seen[id]).length;
+  const rareCount = Object.keys(c.seen).filter((id) => id.endsWith(RARE_SUFFIX)).length;
+  return `
+    <section class="companion-section zukan" aria-labelledby="zukan-title">
+      <h2 id="zukan-title">図鑑 <small>${seenCount}/${FORMS.length}${rareCount > 0 ? `・色ちがい ${rareCount}` : ''}</small></h2>
+      <h3>たまごとあかちゃん</h3>
+      <ul class="zukan-grid">${items(({ stage }) => stage === 'egg' || stage === 'baby')}</ul>
+      <h3>こども</h3>
+      <ul class="zukan-grid">${items(({ stage }) => stage === 'child')}</ul>
+      <h3>おとな</h3>
+      <ul class="zukan-grid">${items(({ stage, secret }) => stage === 'adult' && !secret)}</ul>
+      <h3>ひみつ</h3>
+      <ul class="zukan-grid">${items(({ secret }) => secret)}</ul>
+    </section>`;
+}
+
+/** 一人前になった相棒の、育ち方のふりかえり。 */
+function storyHtml(c) {
+  if (!c.grownOn) return '';
+  return `
+    <section class="companion-section" aria-labelledby="story-title">
+      <h2 id="story-title">育ち方のふりかえり</h2>
+      ${growthStory(c.species, c.variant).map((line) => `<p>${line}</p>`).join('')}
+    </section>`;
+}
+
+/** 一人前まで育てた相棒。新しい順に並べる。 */
+function friendsHtml(c) {
+  if (c.friends.length === 0) return '';
+  const items = [...c.friends].reverse().map((friend) => {
+    const form = formById(friend.form);
+    return `
+      <li>
+        <span class="companion-figure">${companionSvg(friend.form, { size: 56, rare: friend.rare })}</span>
+        <span class="friend-text">
+          <span class="friend-name">${escapeHtml(friend.name || form.name)}</span>
+          <span class="friend-meta">${[friend.name ? form.name : '', friend.rare ? '色ちがい' : '', `${formatDate(friend.born)}〜${formatDate(friend.grown)}`].filter(Boolean).join('・')}</span>
+          ${growthStory(friend.species ?? form.species, form.variant).map((line) => `<span class="friend-story">${line}</span>`).join('')}
+        </span>
+      </li>`;
+  }).join('');
+  return `
+    <section class="companion-section" aria-labelledby="friends-title">
+      <h2 id="friends-title">なかま <small>${c.friends.length}</small></h2>
+      <ul class="friends">${items}</ul>
+    </section>`;
+}
+
+function renderCompanion() {
+  const c = companion();
+  root.innerHTML = `
+    <main class="screen companion-screen">
+      <header class="sub-head">
+        <button type="button" class="text-button" data-action="go-home">戻る</button>
+      </header>
+      <section class="companion-hero" aria-label="今の相棒">
+        ${companionFigure(c, 168)}
+        <h1>${escapeHtml(displayName(c))}</h1>
+        <p class="companion-stage">${companionStage(c)}</p>
+        ${c.generation > 1 ? `<p class="companion-stage">${c.generation}代目の相棒</p>` : ''}
+        <div class="companion-progress">${companionProgressHtml(c)}</div>
+        ${canReceiveEgg(c) ? '<button type="button" class="primary" data-action="receive-egg">新しいたまごを受け取る</button>' : ''}
+      </section>
+      ${storyHtml(c)}
+      <section class="companion-section" aria-labelledby="mood-title">
+        <h2 id="mood-title">今のようす</h2>
+        <p>${companionMood(c)}</p>
+        <p class="hint">${companionHint(c)}</p>
+      </section>
+      <form class="companion-section name-form" id="companion-name-form">
+        <label for="companion-name">名前</label>
+        <div class="name-row">
+          <input id="companion-name" name="name" type="text" maxlength="${NAME_MAX_LENGTH}" autocomplete="off"
+            enterkeyhint="done" value="${escapeHtml(c.name)}" placeholder="${escapeHtml(formName(c))}">
+          <button type="submit" class="secondary">決める</button>
+        </div>
+        <p class="hint">${NAME_MAX_LENGTH}文字まで。空にすると、姿の名前で呼びます。</p>
+      </form>
+      ${zukanHtml(c)}
+      ${friendsHtml(c)}
+      <section class="companion-section" aria-labelledby="companion-home-title">
+        <h2 id="companion-home-title">ホームの表示</h2>
+        <p class="hint">ホームに出さないときも、相棒は育ちます。この画面は、ホームの「相棒」から開けます。</p>
+        <button type="button" class="secondary" data-action="toggle-companion-home">${c.hidden ? 'ホームに相棒を出す' : 'ホームに相棒を出さない'}</button>
+      </section>
+    </main>`;
+}
+
+function openCompanion() {
+  cancelPendingWork();
+  session = null;
+  renderCompanion();
+  window.scrollTo(0, 0);
+}
+
+/** 名前を決める。空にすると、姿の名前で呼ぶ。 */
+function renameCompanion(value) {
+  const c = companion();
+  const name = value.trim().slice(0, NAME_MAX_LENGTH);
+  if (name === c.name) return;
+  c.name = name;
+  saveProgress(progress);
+  renderCompanion();
+  showToast(name ? `名前を「${name}」にしました` : '名前を消しました');
+}
+
 function openAchievements() {
   cancelPendingWork();
   session = null;
@@ -1342,6 +1663,21 @@ const ACTIONS = {
   'start-review': () => requestStart(pickQuestions(questions, { ids: todaysReviewIds(), count: filters.count }), 'review'),
   'show-map': openMap,
   'show-achievements': openAchievements,
+  'show-companion': openCompanion,
+  'receive-egg': () => {
+    if (!receiveEgg(companion(), localDate())) return;
+    saveProgress(progress);
+    renderCompanion();
+    window.scrollTo(0, 0);
+    showToast('新しいたまごが届きました');
+  },
+  'toggle-companion-home': () => {
+    const c = companion();
+    c.hidden = !c.hidden;
+    saveProgress(progress);
+    renderCompanion();
+    root.querySelector('[data-action="toggle-companion-home"]').focus();
+  },
   'set-map-level': ({ value }) => {
     mapLevel = Number(value);
     renderMap();
@@ -1411,6 +1747,10 @@ root.addEventListener('click', (event) => {
 
 root.addEventListener('submit', (event) => {
   event.preventDefault();
+  if (event.target.id === 'companion-name-form') {
+    renameCompanion(event.target.elements.name.value);
+    return;
+  }
   const input = event.target.elements.answer;
   if (input.value.trim()) submitAnswer([input.value]);
   else input.focus();
@@ -1432,6 +1772,10 @@ async function main() {
     const response = await fetch('data/questions.json');
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     questions = await response.json();
+    if (!progress.companion) {
+      companion();
+      saveProgress(progress);
+    }
     renderHome();
     if (isStandalone()) requestPersistentStorage().then((granted) => logEvent(`persist=${granted}`));
   } catch {
