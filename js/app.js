@@ -2,12 +2,17 @@
  * 画面の表示と学習の流れを担当する。
  * 判定は judge.js、記録は progress.js、習熟度と復習は review.js、連続学習日数は streak.js、
  * 実績は achievements.js、答えるまでの速さは speed.js、連続正解は combo.js、
- * 育つ相棒は companion.js(絵は companion-art.js)、音声は speech.js に任せる。
+ * 育つ相棒は companion.js(絵は companion-art.js)、冒険の地図は adventure.js(絵は adventure-art.js)、
+ * 音声は speech.js に任せる。
  */
 import { ACHIEVEMENTS, achievementProgress, earnedCount, unlockAchievements } from './achievements.js';
-import { BackupError, backupFileName, createBackup, readBackup, summarizeProgress } from './backup.js?v=1.12';
+import { boardLayout, boardScene, markerSvg, placeSvg, roadPath, standPoint, starSvg } from './adventure-art.js?v=1.13';
+import {
+  adventureRegions, emptyAdventure, flagCount, placeKey, plantFlags, removeFlag, takeMapMoves,
+} from './adventure.js?v=1.13';
+import { BackupError, backupFileName, createBackup, readBackup, summarizeProgress } from './backup.js?v=1.13';
 import { comboAt, comboMessage, longestCombo } from './combo.js?v=1.11';
-import { companionSvg } from './companion-art.js?v=1.12';
+import { companionSvg } from './companion-art.js?v=1.13';
 import {
   canReceiveEgg,
   displayName,
@@ -28,7 +33,7 @@ import {
   STAGE_POINTS,
   takeNews,
   VARIANTS,
-} from './companion.js?v=1.12';
+} from './companion.js?v=1.13';
 import { diagnostics, isIOS, logEvent } from './diagnostics.js';
 import { judge } from './judge.js?v=1.5';
 import {
@@ -73,7 +78,7 @@ import {
 import { busiestDay, recentDays, studyStreak } from './streak.js';
 
 
-const APP_VERSION = 'v1.12';
+const APP_VERSION = 'v1.13';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const LEVEL_NAMES = { 1: '小学校', 2: '中学校', 3: '高校' };
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
@@ -126,8 +131,12 @@ let advanceTimer = null;
 let toastTimer = null;
 /** 「記録の保存」画面で、読み込む前に確認している記録と、読み込めなかった理由。 */
 let backupState = { pending: null, error: '' };
-/** 文法マップで表示しているレベル。最初に開いたときに、完成していない項目のあるレベルを選ぶ。 */
+/** 冒険の地図で表示しているレベル。最初に開いたときに、旗のない場所が残るレベルを選ぶ。 */
 let mapLevel = null;
+/** 冒険の地図で選んでいる場所(レベルごと)。選んでいなければ、相棒のいる場所を出す。 */
+const mapSelected = {};
+/** 地図の相棒を歩かせるタイマー。 */
+let walkTimers = [];
 /** ホームで出題の設定を開いているか。null のあいだは、まだ答えていない人にだけ開いて見せる。 */
 let settingsOpen = null;
 
@@ -531,7 +540,7 @@ function renderHome() {
       ${Object.keys(progress.speed.days).length > 0 ? speedCard() : ''}
 
       <div class="home-links">
-        <button type="button" class="secondary" data-action="show-map">文法マップ</button>
+        <button type="button" class="secondary" data-action="show-map">冒険の地図</button>
         <button type="button" class="secondary" data-action="show-achievements">実績 ${earnedCount(progress)}/${ACHIEVEMENTS.length}</button>
         ${companion().hidden ? '<button type="button" class="secondary" data-action="show-companion">相棒</button>' : ''}
       </div>
@@ -591,6 +600,7 @@ function confirmPanel() {
       <p>${when}</p>
       <p>回答${next.attempts}回、${next.questions}問、マスター${next.mastered}問、学習した日${next.days}日、実績${next.achievements}個、追加した正解例${next.customAnswers}文</p>
       ${incoming.companion ? `<p>相棒: ${escapeHtml(displayName(incoming.companion))}(${companionStage(incoming.companion)})</p>` : ''}
+      ${incoming.adventure ? `<p>冒険の地図: 旗${flagCount(incoming.adventure)}か所</p>` : ''}
       <p>今の記録(回答${current.attempts}回)を、この内容で置き換えます。</p>
       ${warning}
       <div class="actions">
@@ -784,9 +794,12 @@ async function startSession(picked, mode = 'normal') {
   // 学習を終えてホームに戻ったら、設定は畳んで「始める」を見やすくする。
   settingsOpen = null;
   const voiceAvailable = isRecognitionSupported();
+  mapRegions();
   session = {
     queue: picked,
-    /** normal、review(今日の復習)、weak(苦手な問題)、pattern(文法マップの項目)、missed(間違えた問題)。 */
+    /** 始める前に旗のあった場所。結果の画面で、この回に立てた旗を知らせる。 */
+    flagsBefore: new Set(Object.keys(adventure().flags)),
+    /** normal、review(今日の復習)、weak(苦手な問題)、pattern(冒険の地図の場所)、missed(間違えた問題)。 */
     mode,
     newAchievements: [],
     /** 初回に話し始めるまでの時間。正解になったら記録する。 */
@@ -858,6 +871,7 @@ function startTimer() {
 }
 
 function cancelPendingWork() {
+  stopWalking();
   stopTimer();
   stopSpeaking();
   clearTimeout(advanceTimer);
@@ -1299,15 +1313,52 @@ function renderSummary() {
       <div class="home-actions">
         ${missed.length > 0 ? '<button type="button" class="primary" data-action="retry-missed">間違えた問題をもう一度</button>' : ''}
         <button type="button" class="${missed.length > 0 ? 'secondary' : 'primary'}" data-action="go-home">ホームへ</button>
-        <button type="button" class="secondary" data-action="show-map">文法マップを見る</button>
+        <button type="button" class="secondary" data-action="show-map">冒険の地図を見る</button>
       </div>
     </main>`;
   window.scrollTo(0, 0);
 }
 
+/**
+ * この回に立てた旗と、相棒が進んだ先を知らせる文。
+ * 「正解にする」の取り消しで条件が外れた旗は、ここで抜く。
+ */
+function mapNews() {
+  const flags = adventure().flags;
+  const map = grammarMap(questions, progress);
+  const complete = new Set(map.flatMap(({ level, items }) => items.filter((item) => item.complete).map((item) => placeKey(level, item.pattern))));
+  let changed = false;
+  for (const key of Object.keys(flags)) {
+    if (!session.flagsBefore.has(key) && !complete.has(key)) {
+      removeFlag(adventure(), key);
+      changed = true;
+    }
+  }
+  if (changed) saveProgress(progress);
+  const regions = mapRegions();
+  const planted = regions.flatMap((region) => region.places.filter((place) => place.flaggedOn && !session.flagsBefore.has(place.key)));
+  if (planted.length === 0) return [];
+  const notes = [planted.length === 1
+    ? `「${escapeHtml(planted[0].pattern)}」に旗を立てました！`
+    : `「${escapeHtml(planted[0].pattern)}」など、${planted.length}か所に旗を立てました！`];
+  for (const region of regions) {
+    const before = region.places.findIndex((place) => !session.flagsBefore.has(place.key));
+    const from = before === -1 ? region.places.length : before;
+    if (region.frontier <= from) continue;
+    if (region.frontier === region.places.length) notes.push(`${region.name}(${LEVEL_NAMES[region.level]})のゴールに着きました！`);
+    else {
+      const next = escapeHtml(region.places[region.frontier].pattern);
+      notes.push(companion().hidden
+        ? `次の目的地は、${region.name}の「${next}」です。`
+        : `相棒が、${region.name}の「${next}」へ進みます。`);
+    }
+  }
+  return notes;
+}
+
 /** 結果の画面で、マスターした問題と、残っている今日の復習を知らせる。 */
 function summaryNotes() {
-  const notes = [];
+  const notes = [...mapNews()];
   const best = longestCombo(sessionResults());
   if (best >= 3) notes.push(`いちばん長い連続正解: ${best}問`);
   if (session.speeds.length > 0) {
@@ -1356,55 +1407,167 @@ function companionResult() {
 
 const LEVEL_KEYS = { 1: 'elementary', 2: 'junior', 3: 'high' };
 
-function mapItemHtml(level, item) {
-  const mastered = item.questions.filter(({ state }) => state === 'mastered').length;
-  const dots = item.questions
-    .map(({ state }) => `<span class="dot dot-${state}" title="${MASTERY_LABELS[state]}"></span>`)
-    .join('');
-  const label = `${item.pattern}、${item.questions.length}問中${mastered}問マスター${item.complete ? '、完成' : ''}。押すと練習します`;
+/** 相棒が地図を歩き始めるまでの間。先に旗を立てて見せる。 */
+const WALK_DELAY_MS = 650;
+/** 1マス歩く時間。 */
+const WALK_STEP_MS = 340;
+/** 歩いて見せるのは、行き先の手前のこのマス数まで。遠くから進むときは、そこまで飛ばす。 */
+const MAX_WALK_STEPS = 8;
+const MAP_FLAG_ICON = `<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+  <path class="adv-flag-pole" d="M4.5 14.5V2"/><path class="adv-flag-cloth" d="M5.3 2.2L13 5 5.3 8Z"/></svg>`;
+
+function adventure() {
+  progress.adventure ??= emptyAdventure();
+  return progress.adventure;
+}
+
+/** 3問ともマスターした場所に旗を立ててから、島ごとの場所を返す。 */
+function mapRegions() {
+  const map = grammarMap(questions, progress);
+  if (plantFlags(adventure(), map, localDate()).length > 0) saveProgress(progress);
+  return adventureRegions(map, adventure());
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+}
+
+function cellStyle(cell, layout) {
+  const percent = (value, total) => `${((value / total) * 100).toFixed(3)}%`;
+  return `left:${percent(cell.x, layout.width)};top:${percent(cell.y, layout.height)}`;
+}
+
+function monthDay(day) {
+  const [, month, date] = day.split('-').map(Number);
+  return `${month}月${date}日`;
+}
+
+function placeLabel(place, region) {
+  const parts = [`${place.index + 1}番目、${place.pattern}`, `${place.questions.length}問中${place.mastered}問マスター`];
+  if (place.flaggedOn) parts.push('旗が立っています');
+  if (place.index === region.frontier) parts.push(companion().hidden ? '次の目的地' : '相棒がいる場所');
+  return parts.join('、');
+}
+
+function placeButton(place, region, layout, selected, newFlags) {
+  const cell = layout.cells[place.index + 1];
+  const classes = ['adv-place', newFlags.includes(place.key) ? 'is-new-flag' : ''].filter(Boolean).join(' ');
   return `
-    <li>
-      <button type="button" class="map-item${item.complete ? ' is-complete' : ''}" data-action="practice-pattern"
-        data-level="${level}" data-pattern="${escapeHtml(item.pattern)}" aria-label="${escapeHtml(label)}">
-        <span class="map-name">${escapeHtml(item.pattern)}</span>
-        <span class="map-foot">
-          <span class="dots" aria-hidden="true">${dots}</span>
-          ${item.complete ? '<span class="map-done">完成</span>' : ''}
-        </span>
-      </button>
+    <li class="adv-cell" style="${cellStyle(cell, layout)}">
+      <button type="button" class="${classes}" data-action="select-place" data-level="${region.level}" data-index="${place.index}"
+        aria-pressed="${place.index === selected}" aria-label="${escapeHtml(placeLabel(place, region))}">${placeSvg(place)}</button>
     </li>`;
 }
 
+/** 地図の下に出す、選んでいる場所の名前と、練習するボタン。 */
+function placePanel(region, index) {
+  const place = region.places[index];
+  const tag = index === region.frontier ? (companion().hidden ? '次の目的地' : '相棒がいる場所') : '';
+  const stars = place.questions.map(({ state }) => starSvg(state, 16)).join('');
+  const flag = place.flaggedOn ? `<span class="adv-flag-day">${MAP_FLAG_ICON}${monthDay(place.flaggedOn)}に旗</span>` : '';
+  return `
+    <div class="adv-panel-text">
+      <p class="adv-panel-meta">${escapeHtml(place.area)}・${place.index + 1}番目${tag ? `<span class="adv-tag">${tag}</span>` : ''}</p>
+      <p class="adv-panel-name">${escapeHtml(place.pattern)}</p>
+      <p class="adv-panel-status"><span class="adv-stars" aria-hidden="true">${stars}</span>${place.questions.length}問中${place.mastered}問マスター${flag}</p>
+    </div>
+    <button type="button" class="primary adv-practice" data-action="practice-pattern"
+      data-level="${region.level}" data-pattern="${escapeHtml(place.pattern)}">練習する</button>`;
+}
+
+function walkerHtml(layout, at) {
+  const c = companion();
+  const figure = c.hidden ? markerSvg(40) : companionFigure(c, 52);
+  return `<div class="adv-walker${c.hidden ? ' is-marker' : ''}" style="${cellStyle(standPoint(layout, at), layout)}" aria-hidden="true">${figure}</div>`;
+}
+
+function stopWalking() {
+  for (const timer of walkTimers) clearTimeout(timer);
+  walkTimers = [];
+}
+
+/** 相棒を from の場所から to の場所まで、1マスずつ歩かせる。通った道も伸ばす。 */
+function walkCompanion(layout, from, to) {
+  const walker = root.querySelector('.adv-walker');
+  const trail = root.querySelector('.adv-trail');
+  if (!walker || !trail) return;
+  const steps = to - from;
+  const stepMs = WALK_STEP_MS;
+  walker.style.setProperty('--step-ms', `${stepMs}ms`);
+  for (let step = 1; step <= steps; step += 1) {
+    walkTimers.push(setTimeout(() => {
+      const cell = standPoint(layout, from + step);
+      walker.style.left = `${((cell.x / layout.width) * 100).toFixed(3)}%`;
+      walker.style.top = `${((cell.y / layout.height) * 100).toFixed(3)}%`;
+      walker.classList.remove('is-hopping');
+      void walker.offsetWidth;
+      walker.classList.add('is-hopping');
+      trail.setAttribute('d', roadPath(layout.cells, from + step + 1));
+    }, WALK_DELAY_MS + (step - 1) * stepMs));
+  }
+}
+
+/** 相棒の行き先が画面の外なら、見える位置まで動かす。 */
+function revealWalker(index) {
+  const target = root.querySelector(`.adv-place[data-index="${index}"]`) ?? root.querySelector('.adv-goal-note');
+  if (!target) return;
+  const rect = target.getBoundingClientRect();
+  if (rect.top < 0 || rect.bottom > window.innerHeight - 140) target.scrollIntoView({ block: 'center' });
+}
+
 function renderMap() {
-  const map = grammarMap(questions, progress);
+  stopWalking();
+  const regions = mapRegions();
   const summary = masterySummary(questions, progress);
-  mapLevel ??= (map.find(({ items }) => items.some((item) => !item.complete)) ?? map[0]).level;
-  const current = map.find(({ level }) => level === mapLevel);
-  const complete = current.items.filter((item) => item.complete).length;
-  const levels = map.map(({ level }) => ({ value: level, text: LEVEL_NAMES[level] }));
+  const totalFlags = regions.reduce((sum, region) => sum + region.flags, 0);
+  const totalPlaces = regions.reduce((sum, region) => sum + region.places.length, 0);
+  mapLevel ??= (regions.find((region) => region.frontier < region.places.length) ?? regions[0]).level;
+  const region = regions.find(({ level }) => level === mapLevel) ?? regions[0];
+  const layout = boardLayout(region.places.length);
+  const moves = takeMapMoves(adventure(), region);
+  saveProgress(progress);
+  const walk = moves.to > moves.from && !prefersReducedMotion();
+  const at = walk ? Math.max(moves.from, moves.to - MAX_WALK_STEPS) : moves.to;
+  const goal = region.frontier === region.places.length;
+  const selected = mapSelected[region.level] ?? Math.min(region.frontier, region.places.length - 1);
+  const levels = regions.map(({ level }) => ({ value: level, text: LEVEL_NAMES[level] }));
   const legend = Object.entries(MASTERY_LABELS)
-    .map(([state, label]) => `<li><span class="dot dot-${state}" aria-hidden="true"></span>${label}</li>`)
+    .map(([state, label]) => `<li>${starSvg(state, 16)}${label}</li>`)
     .join('');
+  const goalNote = companion().hidden ? `${region.name}のゴールに着きました！` : `相棒と${region.name}のゴールに着きました！`;
   root.innerHTML = `
-    <main class="screen map">
+    <main class="screen map adventure">
       <header class="sub-head">
         <button type="button" class="text-button" data-action="go-home">戻る</button>
       </header>
       <div class="map-intro">
-        <h1>文法マップ</h1>
-        <p>マスター ${summary.mastered}/${summary.total}問、完成した項目 ${summary.completeItems}/${summary.totalItems}</p>
+        <h1>冒険の地図</h1>
+        <p>旗 ${totalFlags}/${totalPlaces}か所、マスター ${summary.mastered}/${summary.total}問</p>
       </div>
-      ${segmented('set-map-level', levels, mapLevel, 'レベル')}
-      <section class="map-level" id="${LEVEL_KEYS[mapLevel]}">
+      ${segmented('set-map-level', levels, region.level, 'レベル')}
+      <section class="map-level adv-region" id="${LEVEL_KEYS[region.level]}" aria-labelledby="adv-region-title">
         <div class="map-level-head">
-          <h2>${LEVEL_NAMES[mapLevel]}</h2>
-          <p>${current.items.length}項目中 ${complete}項目完成</p>
+          <h2 id="adv-region-title">${region.name}</h2>
+          <p>${LEVEL_NAMES[region.level]}・旗 ${region.flags}/${region.places.length}</p>
         </div>
-        <ul class="legend" aria-label="色の意味">${legend}</ul>
-        <p class="hint">予定日に3回続けて正解するとマスターです。項目を押すと、その3問を練習できます。</p>
-        <ul class="map-grid">${current.items.map((item) => mapItemHtml(mapLevel, item)).join('')}</ul>
+        ${goal ? `<p class="adv-goal-note">${goalNote}</p>` : ''}
+        <ul class="legend adv-legend" aria-label="印の意味">
+          <li class="adv-legend-flag">${MAP_FLAG_ICON}旗</li>
+          ${legend}
+        </ul>
+        <p class="hint">場所の上の3つの星が、3問の習熟度です。予定日に3回続けて正解すると金の星(マスター)になり、3つとも金になると旗が立って、相棒が次の場所へ進みます。道はスタート(下)からゴール(上)へ続きます。</p>
+        <div class="adv-board is-${region.theme}" style="aspect-ratio:${layout.width} / ${layout.height}">
+          ${boardScene(region, layout, at + 1)}
+          <ol class="adv-places" aria-label="${region.name}の場所">
+            ${region.places.map((place) => placeButton(place, region, layout, selected, moves.newFlags)).join('')}
+          </ol>
+          ${walkerHtml(layout, at)}
+        </div>
+        <section class="adv-panel" aria-live="polite" aria-label="選んでいる場所">${placePanel(region, selected)}</section>
       </section>
     </main>`;
+  if (walk) walkCompanion(layout, at, moves.to);
+  return Math.min(moves.to, region.places.length - 1);
 }
 
 const BADGE_ICONS = {
@@ -1629,8 +1792,13 @@ function openAchievements() {
 function openMap() {
   cancelPendingWork();
   session = null;
-  renderMap();
+  // 先に旗を立てて、立てたばかりの旗がある島を開く。
+  mapRegions();
+  const unseenLevel = Number(adventure().unseen[0]?.split('|')[0]);
+  if (unseenLevel) mapLevel = unseenLevel;
+  const index = renderMap();
   window.scrollTo(0, 0);
+  revealWalker(index);
 }
 
 function goHome() {
@@ -1680,7 +1848,15 @@ const ACTIONS = {
   },
   'set-map-level': ({ value }) => {
     mapLevel = Number(value);
-    renderMap();
+    revealWalker(renderMap());
+  },
+  'select-place': ({ level, index }) => {
+    mapSelected[level] = Number(index);
+    for (const button of root.querySelectorAll('.adv-place')) {
+      button.setAttribute('aria-pressed', String(button.dataset.index === index));
+    }
+    const region = mapRegions().find((item) => item.level === Number(level));
+    root.querySelector('.adv-panel').innerHTML = placePanel(region, Number(index));
   },
   'practice-pattern': ({ level, pattern }) => {
     const ids = questions

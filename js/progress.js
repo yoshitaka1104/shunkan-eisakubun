@@ -23,6 +23,8 @@ export function emptyProgress() {
     speed: { days: {}, questions: {} },
     /** 育つ相棒(companion.js)。初めて開いたときに、たまごを用意する。 */
     companion: null,
+    /** 冒険の地図の旗(adventure.js)。初めて地図を開いたときに作る。 */
+    adventure: null,
   };
 }
 

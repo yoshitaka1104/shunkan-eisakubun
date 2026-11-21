@@ -20,6 +20,7 @@
   --star: #e8a400;
   /* 相棒の足もとの影。 */
   --companion-shadow: rgba(0, 0, 0, 0.12);
+  /* 冒険の地図。道、旗、飾りの色。 */
   --radius: 14px;
   font-family: system-ui, -apple-system, "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP", sans-serif;
   line-height: 1.6;
@@ -795,7 +796,7 @@ input:focus-visible {
   flex: 0 0 auto;
 }
 
-/* 文法マップ */
+/* 冒険の地図(見出しと凡例) */
 .map {
   gap: 20px;
 }
@@ -849,51 +850,11 @@ input:focus-visible {
   gap: 6px;
 }
 
-.map-grid {
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
-  gap: 8px;
-  list-style: none;
-}
 
-.map-grid li {
-  display: flex;
-}
 
-.map-item {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 10px;
-  min-height: 84px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface);
-  text-align: left;
-}
 
-.map-item.is-complete {
-  border-color: var(--good);
-  background: var(--good-soft);
-}
 
-.map-name {
-  font-size: 0.88rem;
-  font-weight: 600;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-}
 
-.map-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
 
 .dots {
   display: inline-flex;
@@ -924,11 +885,6 @@ input:focus-visible {
   background: var(--good);
 }
 
-.map-done {
-  color: var(--good);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
 
 .summary-notes {
   display: flex;
@@ -1727,6 +1683,1059 @@ mark {
   .companion-figure.is-egg .c-egg,
   .companion-card.is-new .companion-figure,
   .companion-result.is-changed .companion-figure {
+    animation: none;
+  }
+}
+
+/* 冒険の地図 */
+.adventure {
+  --adv-shadow: rgba(36, 58, 20, 0.2);
+  --adv-road: #f3dcaa;
+  --adv-road-edge: #c29757;
+  --adv-road-light: #fff2d2;
+  --adv-pebble: #d6b57a;
+  --adv-trail: #f08c00;
+  --adv-leaf: #55a84a;
+  --adv-leaf-dark: #3a873c;
+  --adv-leaf-light: #93d66c;
+  --adv-pine: #3f9a63;
+  --adv-pine-dark: #29764d;
+  --adv-palm-trunk: #c4925c;
+  --adv-palm-ring: #9d6f40;
+  --adv-trunk: #93603a;
+  --adv-trunk-dark: #6f4526;
+  --adv-fruit: #e5484d;
+  --adv-rock: #cbc4b8;
+  --adv-rock-dark: #a1998c;
+  --adv-rock-light: #ebe7e0;
+  --adv-snow: #ffffff;
+  --adv-snow-shade: #d6e4f1;
+  --adv-water: #5cc2ea;
+  --adv-water-dark: #45acd8;
+  --adv-water-shine: #d4f4ff;
+  --adv-bank: #e9d6a0;
+  --adv-wood: #c3884b;
+  --adv-wood-dark: #87572c;
+  --adv-wall: #fff6e6;
+  --adv-wall-dark: #e8d4b2;
+  --adv-roof: #e2574c;
+  --adv-roof-2: #4a7fd4;
+  --adv-roof-3: #ef9a37;
+  --adv-shade: rgba(0, 0, 0, 0.14);
+  --adv-window: #8fd0f5;
+  --adv-straw: #e9c46a;
+  --adv-straw-line: #c49a3e;
+  --adv-petal: #ff8db3;
+  --adv-petal-2: #ffffff;
+  --adv-petal-3: #ffd23f;
+  --adv-petal-4: #b48cf2;
+  --adv-heart: #ffb22e;
+  --adv-tuft: #4c963c;
+  --adv-tuft-dry: #9a8a5a;
+  --adv-field: #e7c35f;
+  --adv-field-line: #c39a36;
+  --adv-field-2: #84c75d;
+  --adv-field-2-line: #5c9f3f;
+  --adv-sail: #fffdf5;
+  --adv-flag: #e5484d;
+  --adv-tent: #f08a3c;
+  --adv-tent-dark: #c9652a;
+  --adv-flame: #ffad2b;
+  --adv-flame-core: #fff2a6;
+  --adv-cloud: #ffffff;
+  --adv-foam: rgba(255, 255, 255, 0.75);
+  --adv-wave: rgba(255, 255, 255, 0.85);
+  --adv-bird: #4c5a6b;
+  --adv-mtn: #a2a8c5;
+  --adv-mtn-light: #c0c5dd;
+  --adv-mtn-dark: #858caf;
+  --adv-castle: #ece6d9;
+  --adv-castle-dark: #cdc3b0;
+  --adv-castle-door: #6e4a2c;
+  --adv-duck: #ffffff;
+  --adv-beak: #ffa62b;
+  --adv-eye: #1c1f24;
+  --adv-starfish: #ff9a5a;
+  --adv-shell: #ffe1d2;
+  --adv-rope: #8c6a43;
+  --adv-sign: #bb7c40;
+  --adv-sign-edge: #7b4c22;
+  --adv-sign-light: rgba(255, 255, 255, 0.28);
+  --adv-sign-text: #fff8e8;
+  --adv-stone: #fffaf0;
+  --adv-stone-side: #c9b48b;
+  --adv-stone-ink: #4a3823;
+  --adv-coin: #ffd447;
+  --adv-coin-side: #d0900c;
+  --adv-metal: #f6c443;
+  --adv-gem: #4fc3f7;
+  --adv-glow: rgba(255, 214, 90, 0.5);
+  --adv-chest: #b8733a;
+  --adv-chest-dark: #8a5026;
+  --adv-chest-lid: #a3622e;
+  --adv-chest-in: #4a2a12;
+  --adv-beam: rgba(255, 236, 150, 0);
+  --adv-star-new: #fffdf7;
+  --adv-star-new-line: #a2957c;
+  --adv-bronze: #e08f4e;
+  --adv-bronze-line: #8c4a19;
+  --adv-silver: #e2e9f1;
+  --adv-silver-line: #6f7c8c;
+  --adv-gold: #ffcc2e;
+  --adv-gold-line: #a86f00;
+}
+
+.adv-board {
+  --adv-ground: #8ccb62;
+  --adv-ground-light: #a3d878;
+  --adv-ground-dark: #79bb52;
+  --adv-ground-edge: #6eae4b;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 22px;
+  box-shadow: 0 2px 0 var(--line), 0 8px 24px var(--companion-shadow);
+}
+
+.adv-board.is-island {
+  --adv-sea: #5ec1df;
+  --adv-shallow: #95dcea;
+  --adv-sand: #f2dea2;
+  --adv-ground: #8fd065;
+  --adv-ground-light: #a7dc7c;
+}
+
+.adv-board.is-mountain {
+  --adv-ground: #96cc6b;
+  --adv-ground-light: #abd883;
+  --adv-ground-edge: #79b152;
+  --adv-rockland: #cfc1a3;
+  --adv-rockland-edge: #b5a585;
+  --adv-snowland: #eef5fb;
+  --adv-snowland-shade: #e1ecf6;
+}
+
+.adv-scene {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.a-shadow {
+  fill: var(--adv-shadow);
+}
+
+.a-sea {
+  fill: var(--adv-sea);
+}
+
+.a-shallow {
+  fill: var(--adv-shallow);
+}
+
+.a-sand {
+  fill: var(--adv-sand);
+}
+
+.a-ground {
+  fill: var(--adv-ground);
+}
+
+.a-ground-light {
+  fill: var(--adv-ground-light);
+}
+
+.a-ground-dark {
+  fill: var(--adv-ground-dark);
+}
+
+.a-snowland {
+  fill: var(--adv-snowland);
+}
+
+.a-snowland-shade {
+  fill: var(--adv-snowland-shade);
+}
+
+.a-rockland {
+  fill: var(--adv-rockland);
+}
+
+.a-leaf {
+  fill: var(--adv-leaf);
+}
+
+.a-leaf-dark {
+  fill: var(--adv-leaf-dark);
+}
+
+.a-leaf-light {
+  fill: var(--adv-leaf-light);
+}
+
+.a-pine {
+  fill: var(--adv-pine);
+}
+
+.a-pine-dark {
+  fill: var(--adv-pine-dark);
+}
+
+.a-palm-trunk {
+  fill: var(--adv-palm-trunk);
+}
+
+.a-trunk {
+  fill: var(--adv-trunk);
+}
+
+.a-trunk-dark {
+  fill: var(--adv-trunk-dark);
+}
+
+.a-fruit {
+  fill: var(--adv-fruit);
+}
+
+.a-rock {
+  fill: var(--adv-rock);
+}
+
+.a-rock-dark {
+  fill: var(--adv-rock-dark);
+}
+
+.a-rock-light {
+  fill: var(--adv-rock-light);
+}
+
+.a-snow {
+  fill: var(--adv-snow);
+}
+
+.a-snow-shade {
+  fill: var(--adv-snow-shade);
+}
+
+.a-water {
+  fill: var(--adv-water);
+}
+
+.a-water-dark {
+  fill: var(--adv-water-dark);
+}
+
+.a-bank {
+  fill: var(--adv-bank);
+}
+
+.a-wood {
+  fill: var(--adv-wood);
+}
+
+.a-wood-dark {
+  fill: var(--adv-wood-dark);
+}
+
+.a-wall {
+  fill: var(--adv-wall);
+}
+
+.a-wall-dark {
+  fill: var(--adv-wall-dark);
+}
+
+.a-roof {
+  fill: var(--adv-roof);
+}
+
+.a-roof-2 {
+  fill: var(--adv-roof-2);
+}
+
+.a-roof-3 {
+  fill: var(--adv-roof-3);
+}
+
+.a-shade {
+  fill: var(--adv-shade);
+}
+
+.a-window {
+  fill: var(--adv-window);
+}
+
+.a-straw {
+  fill: var(--adv-straw);
+}
+
+.a-petal {
+  fill: var(--adv-petal);
+}
+
+.a-petal-2 {
+  fill: var(--adv-petal-2);
+}
+
+.a-petal-3 {
+  fill: var(--adv-petal-3);
+}
+
+.a-petal-4 {
+  fill: var(--adv-petal-4);
+}
+
+.a-heart {
+  fill: var(--adv-heart);
+}
+
+.a-tuft {
+  fill: var(--adv-tuft);
+}
+
+.a-field {
+  fill: var(--adv-field);
+}
+
+.a-field-2 {
+  fill: var(--adv-field-2);
+}
+
+.a-sail {
+  fill: var(--adv-sail);
+}
+
+.a-flag {
+  fill: var(--adv-flag);
+}
+
+.a-tent {
+  fill: var(--adv-tent);
+}
+
+.a-tent-dark {
+  fill: var(--adv-tent-dark);
+}
+
+.a-flame {
+  fill: var(--adv-flame);
+}
+
+.a-flame-core {
+  fill: var(--adv-flame-core);
+}
+
+.a-cloud {
+  opacity: 0.92;
+}
+
+.a-cloud-part {
+  fill: var(--adv-cloud);
+}
+
+.a-foam {
+  fill: var(--adv-foam);
+}
+
+.a-mtn {
+  fill: var(--adv-mtn);
+}
+
+.a-mtn-light {
+  fill: var(--adv-mtn-light);
+}
+
+.a-mtn-dark {
+  fill: var(--adv-mtn-dark);
+}
+
+.a-castle {
+  fill: var(--adv-castle);
+}
+
+.a-castle-dark {
+  fill: var(--adv-castle-dark);
+}
+
+.a-castle-door {
+  fill: var(--adv-castle-door);
+}
+
+.a-duck {
+  fill: var(--adv-duck);
+}
+
+.a-beak {
+  fill: var(--adv-beak);
+}
+
+.a-eye {
+  fill: var(--adv-eye);
+}
+
+.a-starfish {
+  fill: var(--adv-starfish);
+}
+
+.a-shell {
+  fill: var(--adv-shell);
+}
+
+.a-pebble {
+  fill: var(--adv-pebble);
+}
+
+.a-sign {
+  fill: var(--adv-sign);
+}
+
+.a-sign-edge {
+  fill: var(--adv-sign-edge);
+}
+
+.a-sign-light {
+  fill: var(--adv-sign-light);
+}
+
+.a-chest {
+  fill: var(--adv-chest);
+}
+
+.a-chest-dark {
+  fill: var(--adv-chest-dark);
+}
+
+.a-chest-lid {
+  fill: var(--adv-chest-lid);
+}
+
+.a-chest-in {
+  fill: var(--adv-chest-in);
+}
+
+.a-metal {
+  fill: var(--adv-metal);
+}
+
+.a-coin {
+  fill: var(--adv-coin);
+  stroke: var(--adv-coin-side);
+  stroke-width: 0.8;
+}
+
+.a-gem {
+  fill: var(--adv-gem);
+}
+
+.a-glow {
+  fill: var(--adv-glow);
+}
+
+.a-beam {
+  fill: var(--adv-beam);
+}
+
+.a-sign-text {
+  fill: var(--adv-sign-text);
+  font-family: inherit;
+  font-weight: 700;
+}
+
+.a-tuft-line,
+.a-tuft-dry-line,
+.a-palm-ring,
+.a-straw-line,
+.a-field-line,
+.a-field-2-line,
+.a-wave-line,
+.a-bird-line,
+.a-rope,
+.a-water-shine,
+.a-ground-edge,
+.a-rockland-edge,
+.a-river-bank,
+.a-river,
+.a-river-shine {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.a-tuft-line {
+  stroke: var(--adv-tuft);
+  stroke-width: 1.4;
+}
+
+.a-tuft-dry-line {
+  stroke: var(--adv-tuft-dry);
+  stroke-width: 1.4;
+}
+
+.a-palm-ring {
+  stroke: var(--adv-palm-ring);
+  stroke-width: 0.8;
+}
+
+.a-straw-line {
+  stroke: var(--adv-straw-line);
+  stroke-width: 0.9;
+}
+
+.a-field-line {
+  stroke: var(--adv-field-line);
+  stroke-width: 1.3;
+}
+
+.a-field-2-line {
+  stroke: var(--adv-field-2-line);
+  stroke-width: 1.3;
+}
+
+.a-wave-line {
+  stroke: var(--adv-wave);
+  stroke-width: 1.5;
+}
+
+.a-bird-line {
+  stroke: var(--adv-bird);
+  stroke-width: 1.3;
+}
+
+.a-rope {
+  stroke: var(--adv-rope);
+  stroke-width: 1.4;
+}
+
+.a-water-shine {
+  stroke: var(--adv-water-shine);
+  stroke-width: 1.4;
+}
+
+.a-ground-edge {
+  stroke: var(--adv-ground-edge);
+  stroke-width: 3;
+}
+
+.a-rockland-edge {
+  stroke: var(--adv-rockland-edge);
+  stroke-width: 3;
+}
+
+.a-river-bank {
+  stroke: var(--adv-bank);
+  stroke-width: 27;
+}
+
+.a-river {
+  stroke: var(--adv-water);
+  stroke-width: 19;
+}
+
+.a-river-shine {
+  stroke: var(--adv-water-shine);
+  stroke-width: 1.6;
+  stroke-dasharray: 7 15;
+}
+
+/* 道。通った道は、金色の足あとの点で表す。 */
+.adv-road-edge,
+.adv-road,
+.adv-road-light,
+.adv-trail {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.adv-road-edge {
+  stroke: var(--adv-road-edge);
+  stroke-width: 25;
+}
+
+.adv-road {
+  stroke: var(--adv-road);
+  stroke-width: 20;
+}
+
+.adv-road-light {
+  stroke: var(--adv-road-light);
+  stroke-width: 7;
+  opacity: 0.75;
+}
+
+.adv-trail {
+  stroke: var(--adv-trail);
+  stroke-width: 5.5;
+  stroke-dasharray: 0.1 9.5;
+}
+
+.a-blades {
+  animation: adv-spin 14s linear infinite;
+}
+
+@keyframes adv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.a-flicker {
+  animation: adv-flicker 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes adv-flicker {
+  from {
+    transform: scale(1, 1);
+  }
+  to {
+    transform: scale(0.88, 1.12);
+  }
+}
+
+.adv-shine path {
+  fill: var(--star);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: adv-twinkle 1.8s ease-in-out infinite;
+}
+
+.adv-shine path:nth-child(2) {
+  animation-delay: 0.6s;
+}
+
+.adv-shine path:nth-child(3) {
+  animation-delay: 1.2s;
+}
+
+@keyframes adv-twinkle {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.7);
+  }
+}
+
+/* 場所。地図の上に重ねたボタンで、石の上に3つの星をのせる。 */
+.adv-places {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adv-cell {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.adv-place {
+  position: absolute;
+  left: -22px;
+  top: -22px;
+  display: block;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.adv-place:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 5px;
+}
+
+.adv-place-svg {
+  display: block;
+  overflow: visible;
+}
+
+.adv-ring,
+.adv-ring-back {
+  fill: none;
+  opacity: 0;
+}
+
+.adv-ring-back {
+  stroke: var(--surface);
+  stroke-width: 7;
+}
+
+.adv-ring {
+  stroke: var(--accent);
+  stroke-width: 3.5;
+}
+
+.adv-place[aria-pressed="true"] .adv-ring,
+.adv-place[aria-pressed="true"] .adv-ring-back {
+  opacity: 1;
+}
+
+.adv-node-shadow {
+  fill: var(--adv-shadow);
+}
+
+.adv-face-side {
+  fill: var(--adv-stone-side);
+}
+
+.adv-face {
+  fill: var(--adv-stone);
+}
+
+.adv-face-side.is-flagged {
+  fill: var(--adv-coin-side);
+}
+
+.adv-face.is-flagged {
+  fill: var(--adv-coin);
+}
+
+.adv-face-shine {
+  fill: #ffffff;
+  opacity: 0.6;
+}
+
+.adv-number {
+  fill: var(--adv-stone-ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.adv-star {
+  fill: var(--adv-star-new);
+  stroke: var(--adv-star-new-line);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.adv-star.is-learning {
+  fill: var(--adv-bronze);
+  stroke: var(--adv-bronze-line);
+}
+
+.adv-star.is-growing {
+  fill: var(--adv-silver);
+  stroke: var(--adv-silver-line);
+}
+
+.adv-star.is-mastered {
+  fill: var(--adv-gold);
+  stroke: var(--adv-gold-line);
+}
+
+.adv-star-icon {
+  display: block;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.adv-stars {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.adv-flag-pole {
+  fill: none;
+  stroke: var(--adv-stone-ink);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.adv-legend .adv-flag-pole,
+.adv-flag-day .adv-flag-pole {
+  stroke: var(--ink);
+}
+
+.adv-flag-cloth {
+  fill: var(--adv-flag);
+}
+
+.adv-flag-base {
+  fill: var(--adv-coin-side);
+}
+
+.adv-place.is-new-flag .adv-flag {
+  transform-box: view-box;
+  transform-origin: 19px 34px;
+  animation: adv-flag-pop 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) 0.2s both;
+}
+
+@keyframes adv-flag-pop {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* 相棒は場所の上に立たせる。押すのは下の場所のボタン。 */
+.adv-walker {
+  position: absolute;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  transition: left var(--step-ms, 300ms) ease-in-out, top var(--step-ms, 300ms) ease-in-out;
+}
+
+.adv-walker > * {
+  position: absolute;
+  left: -26px;
+  top: -45px;
+}
+
+.adv-walker.is-marker > * {
+  left: -20px;
+  top: -44px;
+}
+
+.adv-walker.is-hopping > * {
+  animation: adv-hop var(--step-ms, 300ms) ease-out;
+}
+
+@keyframes adv-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(-14px);
+  }
+}
+
+.adv-marker-pin {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.adv-marker-dot {
+  fill: var(--surface);
+}
+
+.adv-legend-flag svg {
+  flex: 0 0 auto;
+}
+
+.adv-goal-note {
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: var(--good-soft);
+  color: var(--good);
+  font-weight: 700;
+}
+
+/* 選んだ場所。地図を動かしても、画面の下に出したままにする。 */
+.adv-panel {
+  position: sticky;
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 6px 20px var(--companion-shadow);
+}
+
+.adv-panel-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.adv-panel-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.adv-tag {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.adv-panel-name {
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.adv-panel-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.adv-flag-day {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--ink);
+}
+
+.adv-panel .adv-practice {
+  flex: 0 0 auto;
+  width: auto;
+  min-height: 48px;
+  padding: 8px 18px;
+}
+
+/* 暗い画面では、夜の景色にする。窓と灯台に明かりがともる。 */
+@media (prefers-color-scheme: dark) {
+  .adventure {
+    --adv-shadow: rgba(0, 0, 0, 0.32);
+    --adv-road: #8f7d5a;
+    --adv-road-edge: #5b4a30;
+    --adv-road-light: #a7946c;
+    --adv-pebble: #776645;
+    --adv-trail: #ffc23d;
+    --adv-leaf: #3e7c3d;
+    --adv-leaf-dark: #2b5d2e;
+    --adv-leaf-light: #55964d;
+    --adv-pine: #2f6b46;
+    --adv-pine-dark: #1f5034;
+    --adv-palm-trunk: #8a6a45;
+    --adv-palm-ring: #6a4f31;
+    --adv-trunk: #6c482b;
+    --adv-trunk-dark: #50351f;
+    --adv-fruit: #c24a4d;
+    --adv-rock: #75716b;
+    --adv-rock-dark: #59564f;
+    --adv-rock-light: #8f8b84;
+    --adv-snow: #cfd8e6;
+    --adv-snow-shade: #aab8cc;
+    --adv-water: #23739b;
+    --adv-water-dark: #1a5f83;
+    --adv-water-shine: #6fb6d8;
+    --adv-bank: #7d6f4f;
+    --adv-wood: #87603a;
+    --adv-wood-dark: #5c4027;
+    --adv-wall: #b9ae9a;
+    --adv-wall-dark: #998f7c;
+    --adv-roof: #a8473b;
+    --adv-roof-2: #3b629c;
+    --adv-roof-3: #ac7430;
+    --adv-shade: rgba(0, 0, 0, 0.22);
+    --adv-window: #ffd66b;
+    --adv-straw: #a88c4d;
+    --adv-straw-line: #846b36;
+    --adv-petal: #c96d8b;
+    --adv-petal-2: #d9d9d9;
+    --adv-petal-3: #d4b33c;
+    --adv-petal-4: #8e70c2;
+    --adv-heart: #d9a530;
+    --adv-tuft: #2c5a2f;
+    --adv-tuft-dry: #6d6243;
+    --adv-field: #a68c45;
+    --adv-field-line: #846d32;
+    --adv-field-2: #4f7f3c;
+    --adv-field-2-line: #3b6530;
+    --adv-sail: #d8d4c8;
+    --adv-flag: #e0565b;
+    --adv-tent: #b8682f;
+    --adv-tent-dark: #8f4e22;
+    --adv-cloud: #8e9ab0;
+    --adv-foam: rgba(200, 225, 240, 0.4);
+    --adv-wave: rgba(190, 220, 240, 0.55);
+    --adv-bird: #c8d1dc;
+    --adv-mtn: #4f5672;
+    --adv-mtn-light: #626a88;
+    --adv-mtn-dark: #3f455d;
+    --adv-castle: #a9a294;
+    --adv-castle-dark: #8a8476;
+    --adv-castle-door: #3f2a19;
+    --adv-duck: #d9d9d9;
+    --adv-starfish: #c77845;
+    --adv-shell: #c9b1a4;
+    --adv-rope: #a6865e;
+    --adv-sign: #8c5c30;
+    --adv-sign-edge: #563717;
+    --adv-sign-light: rgba(255, 255, 255, 0.16);
+    --adv-sign-text: #fff3da;
+    --adv-stone: #e9e1d0;
+    --adv-stone-side: #9b8968;
+    --adv-stone-ink: #3a2c1c;
+    --adv-coin: #f0c13f;
+    --adv-coin-side: #a87612;
+    --adv-metal: #d6a93a;
+    --adv-glow: rgba(255, 214, 90, 0.35);
+    --adv-chest: #8f5a2d;
+    --adv-chest-dark: #6b4220;
+    --adv-chest-lid: #7f4f27;
+    --adv-beam: rgba(255, 236, 150, 0.22);
+    --adv-star-new: #f2ece0;
+    --adv-star-new-line: #6e6658;
+    --adv-bronze: #d0834a;
+    --adv-bronze-line: #6e3a14;
+    --adv-silver: #d3dbe5;
+    --adv-silver-line: #5b6676;
+    --adv-gold: #f7c531;
+    --adv-gold-line: #8a5b00;
+  }
+
+  .adv-board {
+    --adv-ground: #2f5934;
+    --adv-ground-light: #36633a;
+    --adv-ground-dark: #29502e;
+    --adv-ground-edge: #24452a;
+  }
+
+  .adv-board.is-island {
+    --adv-sea: #12405a;
+    --adv-shallow: #1c5772;
+    --adv-sand: #8b7b56;
+    --adv-ground: #305b35;
+    --adv-ground-light: #38663c;
+  }
+
+  .adv-board.is-mountain {
+    --adv-ground: #305a35;
+    --adv-ground-light: #37643b;
+    --adv-ground-edge: #24462a;
+    --adv-rockland: #5f5848;
+    --adv-rockland-edge: #4c463a;
+    --adv-snowland: #8e9db3;
+    --adv-snowland-shade: #8394ab;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adv-walker,
+  .adv-walker.is-hopping > *,
+  .adv-place.is-new-flag .adv-flag,
+  .adv-shine path,
+  .a-blades,
+  .a-flicker {
+    transition: none;
     animation: none;
   }
 }
