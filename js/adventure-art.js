@@ -994,7 +994,8 @@ const sceneCache = new Map();
 
 /**
  * 島の絵(地面、道、通った道、景色、札、スタートとゴール)。場所のボタンは別に重ねる。
- * @param {{places: object[], frontier: number, theme: string}} region
+ * すべての場所に旗が立つと、ゴールの宝箱が開く。
+ * @param {{places: object[], theme: string}} region
  * @param {ReturnType<typeof boardLayout>} layout
  * @param {number} trailTo 通った道を、このマスまで塗る(場所の番号 + 1)。
  */
@@ -1014,7 +1015,7 @@ export function boardScene(region, layout, trailTo) {
     ${scene.bridges}
     <path class="adv-trail" d="${roadPath(cells, Math.min(trailTo, cells.length - 1))}"/>
     ${scene.items}
-    ${goalChest(cells.at(-1), region.frontier === region.places.length)}
+    ${goalChest(cells.at(-1), region.places.every((place) => place.flaggedOn))}
     ${scene.top}
   </svg>`;
 }

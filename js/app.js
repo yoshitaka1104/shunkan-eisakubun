@@ -6,11 +6,11 @@
  * 音声は speech.js に任せる。
  */
 import { ACHIEVEMENTS, achievementProgress, earnedCount, unlockAchievements } from './achievements.js';
-import { boardLayout, boardScene, markerSvg, placeSvg, roadPath, standPoint, starSvg } from './adventure-art.js?v=1.13';
+import { boardLayout, boardScene, markerSvg, placeSvg, roadPath, standPoint, starSvg } from './adventure-art.js?v=1.14';
 import {
-  adventureRegions, emptyAdventure, flagCount, placeKey, plantFlags, removeFlag, takeMapMoves,
-} from './adventure.js?v=1.13';
-import { BackupError, backupFileName, createBackup, readBackup, summarizeProgress } from './backup.js?v=1.13';
+  adventureRegions, emptyAdventure, flagCount, placeKey, planSession, plantFlags, removeFlag, takeMapMoves,
+} from './adventure.js?v=1.14';
+import { BackupError, backupFileName, createBackup, readBackup, summarizeProgress } from './backup.js?v=1.14';
 import { comboAt, comboMessage, longestCombo } from './combo.js?v=1.11';
 import { companionSvg } from './companion-art.js?v=1.13';
 import {
@@ -78,7 +78,7 @@ import {
 import { busiestDay, recentDays, studyStreak } from './streak.js';
 
 
-const APP_VERSION = 'v1.13';
+const APP_VERSION = 'v1.14';
 const LEVEL_OPTIONS = ['all', 1, 2, 3];
 const LEVEL_NAMES = { 1: '小学校', 2: '中学校', 3: '高校' };
 const COUNT_OPTIONS = [5, 10, 20, 'all'];
@@ -131,7 +131,7 @@ let advanceTimer = null;
 let toastTimer = null;
 /** 「記録の保存」画面で、読み込む前に確認している記録と、読み込めなかった理由。 */
 let backupState = { pending: null, error: '' };
-/** 冒険の地図で表示しているレベル。最初に開いたときに、旗のない場所が残るレベルを選ぶ。 */
+/** 冒険の地図で表示しているレベル。最初に開いたときに、相棒がまだゴールに着いていないレベルを選ぶ。 */
 let mapLevel = null;
 /** 冒険の地図で選んでいる場所(レベルごと)。選んでいなければ、相棒のいる場所を出す。 */
 const mapSelected = {};
@@ -794,11 +794,13 @@ async function startSession(picked, mode = 'normal') {
   // 学習を終えてホームに戻ったら、設定は畳んで「始める」を見やすくする。
   settingsOpen = null;
   const voiceAvailable = isRecognitionSupported();
-  mapRegions();
+  const regions = mapRegions();
   session = {
     queue: picked,
     /** 始める前に旗のあった場所。結果の画面で、この回に立てた旗を知らせる。 */
     flagsBefore: new Set(Object.keys(adventure().flags)),
+    /** 始める前の、島ごとの相棒の位置。結果の画面で、相棒が進んだ先を知らせる。 */
+    frontierBefore: new Map(regions.map((region) => [region.level, region.frontier])),
     /** normal、review(今日の復習)、weak(苦手な問題)、pattern(冒険の地図の場所)、missed(間違えた問題)。 */
     mode,
     newAchievements: [],
@@ -1337,13 +1339,11 @@ function mapNews() {
   if (changed) saveProgress(progress);
   const regions = mapRegions();
   const planted = regions.flatMap((region) => region.places.filter((place) => place.flaggedOn && !session.flagsBefore.has(place.key)));
-  if (planted.length === 0) return [];
-  const notes = [planted.length === 1
-    ? `「${escapeHtml(planted[0].pattern)}」に旗を立てました！`
-    : `「${escapeHtml(planted[0].pattern)}」など、${planted.length}か所に旗を立てました！`];
+  const notes = [];
+  if (planted.length === 1) notes.push(`「${escapeHtml(planted[0].pattern)}」に旗を立てました！`);
+  if (planted.length > 1) notes.push(`「${escapeHtml(planted[0].pattern)}」など、${planted.length}か所に旗を立てました！`);
   for (const region of regions) {
-    const before = region.places.findIndex((place) => !session.flagsBefore.has(place.key));
-    const from = before === -1 ? region.places.length : before;
+    const from = session.frontierBefore.get(region.level) ?? region.frontier;
     if (region.frontier <= from) continue;
     if (region.frontier === region.places.length) notes.push(`${region.name}(${LEVEL_NAMES[region.level]})のゴールに着きました！`);
     else {
@@ -1418,6 +1418,11 @@ const MAP_FLAG_ICON = `<svg viewBox="0 0 16 16" width="16" height="16" aria-hidd
 
 function adventure() {
   progress.adventure ??= emptyAdventure();
+  // v1.13 までの記録は、相棒の位置を at に入れていた。場所の並びが変わったので捨てて、spot を作る。
+  if (!progress.adventure.spot) {
+    delete progress.adventure.at;
+    progress.adventure.spot = {};
+  }
   return progress.adventure;
 }
 
@@ -1426,6 +1431,12 @@ function mapRegions() {
   const map = grammarMap(questions, progress);
   if (plantFlags(adventure(), map, localDate()).length > 0) saveProgress(progress);
   return adventureRegions(map, adventure());
+}
+
+/** ホームの「始める」の問題。冒険の地図の道の先頭から新しい問題を出し、今日の復習を混ぜる(adventure.js の planSession)。 */
+function adventureQueue() {
+  const byId = new Map(questions.map((question) => [question.id, question]));
+  return planSession(mapRegions(), progress.review, localDate(), filters).map((id) => byId.get(id));
 }
 
 function prefersReducedMotion() {
@@ -1534,7 +1545,9 @@ function renderMap() {
   const legend = Object.entries(MASTERY_LABELS)
     .map(([state, label]) => `<li>${starSvg(state, 16)}${label}</li>`)
     .join('');
-  const goalNote = companion().hidden ? `${region.name}のゴールに着きました！` : `相棒と${region.name}のゴールに着きました！`;
+  const walkerName = companion().hidden ? '印' : '相棒';
+  const arrived = companion().hidden ? `${region.name}のゴールに着きました！` : `相棒と${region.name}のゴールに着きました！`;
+  const goalNote = region.flags === region.places.length ? arrived : `${arrived}すべての場所に旗を立てると、宝箱が開きます。`;
   root.innerHTML = `
     <main class="screen map adventure">
       <header class="sub-head">
@@ -1555,7 +1568,7 @@ function renderMap() {
           <li class="adv-legend-flag">${MAP_FLAG_ICON}旗</li>
           ${legend}
         </ul>
-        <p class="hint">場所の上の3つの星が、3問の習熟度です。予定日に3回続けて正解すると金の星(マスター)になり、3つとも金になると旗が立って、相棒が次の場所へ進みます。道はスタート(下)からゴール(上)へ続きます。</p>
+        <p class="hint">ホームの「始める」で、${walkerName}のいる場所の問題が出ます。3問とも答えると、${walkerName}が次の場所へ進みます。場所の上の3つの星が、3問の習熟度です。予定日に3回続けて正解すると金の星(マスター)になり、3つとも金になると旗が立ちます。道はスタート(下)からゴール(上)へ続きます。</p>
         <div class="adv-board is-${region.theme}" style="aspect-ratio:${layout.width} / ${layout.height}">
           ${boardScene(region, layout, at + 1)}
           <ol class="adv-places" aria-label="${region.name}の場所">
@@ -1826,7 +1839,7 @@ const ACTIONS = {
     renderHome();
     root.querySelector('[data-action="toggle-settings"]').focus();
   },
-  start: () => requestStart(pickQuestions(questions, filters)),
+  start: () => requestStart(adventureQueue()),
   'start-weak': () => requestStart(pickQuestions(questions, { ids: knownWeakIds() }), 'weak'),
   'start-review': () => requestStart(pickQuestions(questions, { ids: todaysReviewIds(), count: filters.count }), 'review'),
   'show-map': openMap,

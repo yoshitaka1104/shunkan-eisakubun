@@ -3,7 +3,7 @@
  * 記録は端末の中にしかないので、消えたときや、Safari とホーム画面のアプリの間で移すときに使う。
  * 読み込むファイルは手で書き換えられている可能性があるため、使える値だけを取り出す。
  */
-import { readAdventure } from './adventure.js?v=1.13';
+import { readAdventure } from './adventure.js?v=1.14';
 import { readCompanion } from './companion.js?v=1.13';
 import { emptyProgress } from './progress.js';
 import { MAX_SPEED_MS } from './speed.js';
